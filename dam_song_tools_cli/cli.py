@@ -7,6 +7,7 @@ import os
 import json
 import soundfile as sf
 from typing import Any
+from pydub import AudioSegment
 
 from okd import (
     YksOkdHeader,
@@ -23,6 +24,7 @@ from okd import (
     midi_to_okds,
 )
 
+from mtf import MtfAudio
 
 def default(item: Any):
     match item:
@@ -272,6 +274,62 @@ class Cli:
         with open(p3_okd_path, "wb") as p3_okd_file:
             self.__logger.info("Write P3 OKD.")
             p3_okd.write(p3_okd_file, scramble)
+    
+    def dump_mtf(json_path: str, audio_path: str, output_file: str):
+        """Mix decompressed MTF file into a single WAV file.
+        
+        Args:
+            json_path (str): Directory containing JSON files
+            output_path (str): Output WAV file path
+        """
+        mixed_audio = AudioSegment.silent(duration=0)
+
+        json_path = [
+            audio_path + "/" + "PlayListChorus0.json",
+            audio_path + "/" + "PlayListGuideMelo0.json",
+            audio_path + "/" + "PlayListSynthChorus0.json",
+            audio_path + "/" + "PlayListDrum0.json",
+            audio_path + "/" + "PlayListUpper0.json",
+        ]
+        for json_file in json_path:
+            with open(json_file, "r", encoding="utf-8") as f:
+                playlist = json.load(f)
+
+            vol_events = playlist.get("VolEvent", [])
+
+            for item in playlist.get("AudioPlayListItem", []):
+                file_name = item["file"]
+                start_time = item["start_clk"]  # ミリ秒
+                input_path = os.path.join(audio_path, file_name)
+
+                if item["codec"] == "RawADPCM":
+                    if os.path.exists(input_path):
+                        mtf_audio_processor = MtfAudio()
+                        audio = mtf_audio_processor.decode_adpcm(input_path)
+                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+                    else:
+                        print(f"Warning: {input_path} not found, skipping.")
+                        continue
+                elif item["codec"] == "OPUS":
+                    if os.path.exists(input_path):
+                        mtf_audio_processor = MtfAudio()
+                        audio = mtf_audio_processor.decode_opus(input_path)
+                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+                    else:
+                        print(f"Warning: {input_path} not found, skipping.")
+                        continue
+                else:
+                    print(f"Warning: Unsupported codec {item['codec']}, skipping.")
+                    continue
+
+                # MIX
+                if len(mixed_audio) < start_time + len(audio):
+                    mixed_audio = mixed_audio.append(AudioSegment.silent(duration=start_time + len(audio) - len(mixed_audio)), crossfade=0)
+                mixed_audio = mixed_audio.overlay(audio, position=int(start_time))
+
+        # Export to a WAV file
+        mixed_audio.export(output_file, format="wav")
+        print(f"Mixed WAV file saved at: {output_file}")
 
 
 def main() -> None:
