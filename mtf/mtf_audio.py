@@ -34,10 +34,10 @@ class MtfAudio:
 
     def apply_vol_events(self, vol_events, start_time):
         """Applies VolEvent"""
-        audio = self.process_vol_events(vol_events, start_time, "Volume")
-        audio = self.process_vol_events(vol_events, start_time, "Velocity")
-        audio = self.process_vol_events(vol_events, start_time, "Pan")
-        return audio
+        self.audio = self.process_vol_events(vol_events, start_time, "Volume")
+        self.audio = self.process_vol_events(vol_events, start_time, "Velocity")
+        self.audio = self.process_vol_events(vol_events, start_time, "Pan")
+        return self.audio
 
     def process_vol_events(self, vol_events, start_time, apply_type):
         """Processes audio VolEvent"""
