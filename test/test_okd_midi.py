@@ -1,7 +1,7 @@
-import bitstring
+from io import BytesIO
 import unittest
 
-from dam_okd_tools.okd_midi import (
+from okd.okd_midi import (
     read_variable_int,
     write_variable_int,
     read_extended_variable_int,
@@ -29,12 +29,12 @@ class TestOkdMidi(unittest.TestCase):
     def test_read_varibale_int(self):
         for value, buffer in TestOkdMidi.VALUES:
             with self.subTest(value=value, buffer=buffer):
-                stream = bitstring.BitStream(buffer)
+                stream = BytesIO(buffer)
                 read_value = read_variable_int(stream)
                 self.assertEqual(value, read_value)
 
         with self.assertRaises(ValueError):
-            stream = bitstring.BitStream(b"\x7f\x7f\x7f")
+            stream = BytesIO(b"\x7f\x7f\x7f")
             read_variable_int(stream)
 
     def test_write_variable_int(
@@ -42,27 +42,29 @@ class TestOkdMidi(unittest.TestCase):
     ):
         for value, buffer in TestOkdMidi.VALUES:
             with self.subTest(value=value, buffer=buffer):
-                stream = bitstring.BitStream()
+                stream = BytesIO()
                 write_variable_int(stream, value)
-                self.assertEqual(buffer, stream.tobytes())
+                stream.seek(0)
+                self.assertEqual(buffer, stream.read())
 
         with self.assertRaises(ValueError):
-            stream = bitstring.BitStream()
+            stream = BytesIO()
             write_variable_int(stream, 0x04104F)
 
     def test_read_extended_variable_int(self):
         for value, buffer in TestOkdMidi.EXTENDED_VALUES:
             with self.subTest(value=value, buffer=buffer):
-                stream = bitstring.BitStream(buffer + b"\x80")
+                stream = BytesIO(buffer + b"\x80")
                 read_value = read_extended_variable_int(stream)
                 self.assertEqual(value, read_value)
 
     def test_write_extended_variable_int(self):
         for value, buffer in TestOkdMidi.EXTENDED_VALUES:
             with self.subTest(value=value, buffer=buffer):
-                stream = bitstring.BitStream()
+                stream = BytesIO()
                 write_extended_variable_int(stream, value)
-                self.assertEqual(buffer, stream.tobytes())
+                stream.seek(0)
+                self.assertEqual(buffer, stream.read())
 
 
 if __name__ == "__main__":
