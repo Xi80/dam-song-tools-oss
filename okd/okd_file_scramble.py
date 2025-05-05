@@ -28,7 +28,6 @@ def scramble(
     Returns:
         int: Last scramble pattern index
     """
-
     if length is not None and length % 2 != 0:
         raise ValueError("Argument `length` length must be multiple of 2.")
 
@@ -70,7 +69,6 @@ def detect_scramble_pattern_index(
     Returns:
         int | None: Scrambled pattern index if int, unscrambled if None
     """
-
     if len(expected_magic_bytes) != 4:
         raise ValueError("Argument `expected_magic_bytes` length must be 4.")
 
@@ -119,7 +117,6 @@ def descramble(
     Returns:
         int: Last scramble pattern index
     """
-
     if length is not None and length % 2 != 0:
         raise ValueError("Argument `length` length must be multiple of 2.")
 

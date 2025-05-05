@@ -38,7 +38,6 @@ class OkaHeader:
         Returns:
             Self: Instance of this class
         """
-
         if scramble_pattern_index is None:
             buffer = stream.read(OkaHeader.FIXED_PART_LENGTH)
         else:
@@ -73,7 +72,6 @@ class OkaHeader:
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(OkaHeader.MAGIC_BYTES)
         stream.write(self.length.to_bytes(4, "big"))
         stream.write(self.version.encode("ascii").ljust(16, b"\x00"))

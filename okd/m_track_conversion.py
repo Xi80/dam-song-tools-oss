@@ -2,12 +2,12 @@ import math
 import mido
 
 from .chunks import MTrackEvent, MTrackAbsoluteTimeEvent, MTrackChunk
-from .midi import (
+from midi.time_converter import MidiTimeConverter
+from midi.utils import (
     get_track_by_port_channel,
     get_first_and_last_note_times,
     get_time_signatures,
 )
-from .midi_time_converter import MidiTimeConverter
 
 MIDI_M_TRACK_PORT = 16
 

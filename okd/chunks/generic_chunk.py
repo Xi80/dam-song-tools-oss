@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from io import BufferedReader
 from typing import Self
 
-from . import ChunkBase
+from .chunk_base import ChunkBase
 
 
 @dataclass
@@ -21,7 +21,6 @@ class GenericChunk(ChunkBase):
         Returns:
             Self: Generic Chunk
         """
-
         id, payload = ChunkBase._read_common(stream)
         return cls(id, payload)
 

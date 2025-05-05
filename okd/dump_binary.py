@@ -33,7 +33,6 @@ def dump_binary(data: bytes, chunk_size=16) -> str:
     Returns:
         str: Binary dumped string
     """
-
     output = ""
 
     chunk_count = math.floor(len(data) / chunk_size)

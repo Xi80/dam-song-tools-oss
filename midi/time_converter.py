@@ -11,7 +11,6 @@ class MidiTimeConverter:
 
     def add_tempo_change(self, position_ms: int, tempo_bpm: float):
         """Add a tempo change event at the specified position."""
-
         self.tempo_changes.append((position_ms, tempo_bpm))
         # Keep tempo changes sorted by position
         self.tempo_changes.sort(key=lambda x: x[0])
@@ -22,7 +21,6 @@ class MidiTimeConverter:
         Parameters:
             midi (MidiFile): MIDI file
         """
-
         self.ppqn: int = midi.ticks_per_beat
 
         current_time_ticks = 0
@@ -56,7 +54,6 @@ class MidiTimeConverter:
 
     def ms_to_ticks(self, time_ms: int) -> int:
         """Convert milliseconds to MIDI ticks"""
-
         if not self.tempo_changes:
             raise ValueError("No tempo information available")
 
@@ -92,14 +89,12 @@ class MidiTimeConverter:
 
     def _calculate_ticks_at_tempo(self, duration_ms, tempo_bpm) -> float:
         """Calculate ticks for a duration at a constant tempo."""
-
         microseconds_per_beat = 60_000_000 / tempo_bpm
         microseconds = duration_ms * 1000
         return (microseconds / microseconds_per_beat) * self.ppqn
 
     def ticks_to_ms(self, ticks: int):
         """Convert MIDI ticks to milliseconds"""
-
         if not self.tempo_changes:
             raise ValueError("No tempo information available")
 

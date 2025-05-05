@@ -3,6 +3,7 @@ from io import BufferedReader, BufferedWriter, BytesIO
 import os
 from typing import Self
 
+from midi.event import MidiEvent, MidiTrackEvent
 from ..okd_midi import (
     read_status_byte,
     is_data_bytes,
@@ -11,17 +12,15 @@ from ..okd_midi import (
     write_variable_int,
     write_extended_variable_int,
 )
-from ..midi import MidiEvent, MidiTrackEvent
 
-from . import (
-    ChunkBase,
-    GenericChunk,
-    PTrackInfoEntry,
-    PTrackInfoChunk,
+from .chunk_base import ChunkBase
+from .generic_chunk import GenericChunk
+from .p_track_info_chunk import PTrackInfoEntry, PTrackInfoChunk
+from .extended_p_track_info_chunk import (
     ExtendedPTrackInfoEntry,
     ExtendedPTrackInfoChunk,
-    P3TrackInfoChunk,
 )
+from .p3_track_info_chunk import P3TrackInfoChunk
 
 
 @dataclass
@@ -45,7 +44,6 @@ class PTrackEvent(MidiTrackEvent):
         Returns:
             bytes: Data Bytes
         """
-
         data_bytes = b""
         while True:
             byte = stream.read(1)
@@ -153,7 +151,6 @@ class PTrackEvent(MidiTrackEvent):
         Args:
             stream (BufferedReader): Output stream
         """
-
         write_extended_variable_int(stream, self.delta_time)
         stream.write(self.status_byte.to_bytes())
         stream.write(self.data_bytes)
@@ -192,7 +189,6 @@ class PTrackChunk(ChunkBase):
         Returns:
             Self: Instance of this class
         """
-
         stream = BytesIO(generic.payload)
         events: list[PTrackEvent] = []
         while True:
@@ -281,7 +277,6 @@ class PTrackChunk(ChunkBase):
         Returns:
             int: Track Number
         """
-
         return self.id[3]
 
     def exists_channel_message(self, channel: int) -> bool:
@@ -293,7 +288,6 @@ class PTrackChunk(ChunkBase):
         Returns:
             bool: True if a message exists for the specified channel, False otherwise
         """
-
         return any(
             (event.status_byte & 0xF0) != 0xF0 and (event.status_byte & 0x0F) == channel
             for event in self.events

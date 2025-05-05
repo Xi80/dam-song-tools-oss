@@ -1,19 +1,21 @@
 from io import BufferedReader
 
-from . import (
-    GenericChunk,
+from .generic_chunk import GenericChunk
+from .p_track_info_chunk import (
     PTrackInfoChannelInfoEntry,
     PTrackInfoEntry,
     PTrackInfoChunk,
-    P3TrackInfoChunk,
+)
+from .p3_track_info_chunk import P3TrackInfoChunk
+from .extended_p_track_info_chunk import (
     ExtendedPTrackInfoChannelInfoEntry,
     ExtendedPTrackInfoEntry,
     ExtendedPTrackInfoChunk,
-    MTrackChunk,
-    PTrackChunk,
-    AdpcmChunk,
-    OkdChunk,
 )
+from .m_track_chunk import MTrackChunk
+from .p_track_chunk import PTrackChunk
+from .adpcm_chunk import AdpcmChunk
+from .okd_chunk import OkdChunk
 
 
 def read_chunk(stream: BufferedReader) -> OkdChunk:
@@ -25,7 +27,6 @@ def read_chunk(stream: BufferedReader) -> OkdChunk:
     Returns:
         OkdChunk: OKD Chunk
     """
-
     generic = GenericChunk.read(stream)
 
     if generic.id == b"YPTI":

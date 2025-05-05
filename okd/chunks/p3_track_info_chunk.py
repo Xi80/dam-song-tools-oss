@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from io import BufferedWriter, BytesIO
 from typing import Self
 
-from . import ChunkBase, GenericChunk
-from . import PTrackInfoChannelInfoEntry
+from .chunk_base import ChunkBase
+from .generic_chunk import GenericChunk
+from .p_track_info_chunk import PTrackInfoChannelInfoEntry
 
 
 @dataclass
@@ -33,7 +34,6 @@ class P3TrackInfoChunk(ChunkBase):
         Returns:
             Self: Instance of this class
         """
-
         stream = BytesIO(generic.payload)
 
         buffer = stream.read(4)
@@ -94,7 +94,6 @@ class P3TrackInfoChunk(ChunkBase):
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream = BytesIO()
 
         stream.write(self.track_number.to_bytes())
@@ -125,7 +124,6 @@ class P3TrackInfoChunk(ChunkBase):
         Returns:
             P3TrackInfoChannelInfoEntry | Self: Converted instance
         """
-
         if "attribute" in json_object:
             return P3TrackInfoChannelInfoEntry(
                 json_object["attribute"],

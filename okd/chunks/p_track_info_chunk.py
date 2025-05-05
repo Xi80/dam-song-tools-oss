@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from io import BufferedReader, BufferedWriter, BytesIO
 from typing import Self
 
-from . import ChunkBase
-from . import GenericChunk
+from .chunk_base import ChunkBase
+from .generic_chunk import GenericChunk
 
 
 @dataclass
@@ -25,7 +25,6 @@ class PTrackInfoChannelInfoEntry:
         Returns:
             Self: Instance of this class
         """
-
         buffer = stream.read(4)
         if len(buffer) < 4:
             raise ValueError("Too less read bytes.")
@@ -42,7 +41,6 @@ class PTrackInfoChannelInfoEntry:
         Returns:
             bool: True if Chorus, else False
         """
-
         return self.attribute & 0x01 != 0x01
 
     def is_guide_melody(self) -> bool:
@@ -60,7 +58,6 @@ class PTrackInfoChannelInfoEntry:
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(self.attribute.to_bytes())
         stream.write(self.ports.to_bytes())
         stream.write(self.control_change_ax.to_bytes())
@@ -89,7 +86,6 @@ class PTrackInfoEntry:
         Returns:
             Self: Instance of this class
         """
-
         buffer = stream.read(4)
         if len(buffer) < 4:
             raise ValueError("Too less read bytes.")
@@ -147,7 +143,6 @@ class PTrackInfoEntry:
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(self.track_number.to_bytes())
         stream.write(self.track_status.to_bytes())
         stream.write(self.use_channel_group_flag.to_bytes(2, "big"))
@@ -178,7 +173,6 @@ class PTrackInfoChunk(ChunkBase):
         Returns:
             Self: Instance of this class
         """
-
         p_track_info: list[PTrackInfoEntry] = []
         entry_count = int.from_bytes(generic.payload[0:2], "big")
         stream = BytesIO(generic.payload[2:])
@@ -199,7 +193,6 @@ class PTrackInfoChunk(ChunkBase):
         Returns:
             PTrackInfoChannelInfoEntry | PTrackInfoEntry | Self: Converted instance
         """
-
         if "attribute" in json_object:
             return PTrackInfoChannelInfoEntry(
                 json_object["attribute"],

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-
 from dataclasses import dataclass
 from io import BufferedReader, BufferedWriter, BytesIO
 from logging import getLogger
@@ -45,7 +44,6 @@ class OkdHeaderBase(ABC):
         Returns:
             tuple[int, str, int, int, int, bytes]: length, version, id_karaoke, adpcm_offset, encryption_mode and optional_data
         """
-
         if scramble_pattern_index is None:
             fixed_part_buffer = stream.read(OkdHeaderBase.FIXED_PART_LENGTH)
         else:
@@ -104,7 +102,6 @@ class OkdHeaderBase(ABC):
         Returns:
             bytes: Size of Optional Data Buffer
         """
-
         pass
 
     @abstractmethod
@@ -114,7 +111,6 @@ class OkdHeaderBase(ABC):
         Returns:
             bytes: Optional Data Buffer
         """
-
         pass
 
     def write(self, stream: BufferedWriter) -> None:
@@ -123,7 +119,6 @@ class OkdHeaderBase(ABC):
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(OkdHeaderBase.MAGIC_BYTES)
         stream.write(self.length.to_bytes(4, "big"))
         stream.write(self.version.encode("ascii").ljust(16, b"\x00"))
@@ -156,7 +151,6 @@ class OkdGenericHeader(OkdHeaderBase):
         Returns:
             Self: Instance of this class
         """
-
         length, version, id_karaoke, adpcm_offset, encryption_mode, optional_data = (
             OkdHeaderBase._read_common(stream, scramble_pattern_index)
         )
@@ -191,7 +185,6 @@ class YksOkdHeader(OkdHeaderBase):
         Returns:
             Self: Instance of this class
         """
-
         return cls(
             generic.length,
             generic.version,
@@ -227,7 +220,6 @@ class MmtOkdHeader(OkdHeaderBase):
         Returns:
             Self: Instance of this class
         """
-
         yks_chunks_length = int.from_bytes(generic.optional_data[0:4], "big")
         mmt_chunks_length = int.from_bytes(generic.optional_data[4:8], "big")
         yks_chunks_crc = int.from_bytes(generic.optional_data[8:10], "big")
@@ -277,7 +269,6 @@ class MmkOkdHeader(OkdHeaderBase):
         Returns:
             Self: Instance of this class
         """
-
         yks_chunks_length = int.from_bytes(generic.optional_data[0:4], "big")
         mmt_chunks_length = int.from_bytes(generic.optional_data[4:8], "big")
         mmk_chunks_length = int.from_bytes(generic.optional_data[8:12], "big")
@@ -337,7 +328,6 @@ class SprOkdHeader(OkdHeaderBase):
         Returns:
             Self: Instance of this class
         """
-
         yks_chunks_length = int.from_bytes(generic.optional_data[0:4], "big")
         mmt_chunks_length = int.from_bytes(generic.optional_data[4:8], "big")
         mmk_chunks_length = int.from_bytes(generic.optional_data[8:12], "big")
@@ -404,7 +394,6 @@ class DioOkdHeader(OkdHeaderBase):
         Returns:
             Self: Instance of this class
         """
-
         yks_chunks_length = int.from_bytes(generic.optional_data[0:4], "big")
         mmt_chunks_length = int.from_bytes(generic.optional_data[4:8], "big")
         mmk_chunks_length = int.from_bytes(generic.optional_data[8:12], "big")
@@ -468,7 +457,6 @@ def read_okd_header(
     Returns:
         OkdHeader: OKD Header
     """
-
     generic = OkdGenericHeader.read(stream, scramble_pattern_index)
 
     if len(generic.optional_data) == YksOkdHeader.optional_data_buffer_size():
@@ -507,7 +495,6 @@ class OkdFile:
         Returns:
             Self: Instance of this class
         """
-
         if SprcHeader.has_sprc_header(stream):
             # Validate SPRC Header
             OkdFile.__logger.info("SPRC Header detected.")
@@ -558,7 +545,6 @@ class OkdFile:
             stream (BufferedReader): Output stream
             scramble (bool, optional): Scramble. Defaults to False.
         """
-
         # Make chunks buffer
         chunks_stream = BytesIO()
         for chunk in self.chunks:

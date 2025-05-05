@@ -4,8 +4,8 @@ from typing import Self
 
 from ..adpcm import AdpcmDecoder
 
-from . import ChunkBase
-from . import GenericChunk
+from .chunk_base import ChunkBase
+from .generic_chunk import GenericChunk
 
 
 @dataclass
@@ -22,7 +22,6 @@ class AdpcmChunkTrack:
         Returns:
             list[int]: Decoded samples
         """
-
         stream = BytesIO(self.data)
         decoder = AdpcmDecoder()
         return decoder.decode(stream)
@@ -33,7 +32,6 @@ class AdpcmChunkTrack:
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(AdpcmChunkTrack.TRACK_ID)
         stream.write(len(self.data).to_bytes(4, "big"))
         stream.write(self.data)
@@ -55,7 +53,6 @@ class AdpcmChunk(ChunkBase):
         Returns:
             Self: Instance of this class
         """
-
         stream = BytesIO(generic.payload)
         tracks: list[AdpcmChunkTrack] = []
         while True:

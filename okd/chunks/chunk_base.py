@@ -23,7 +23,6 @@ class ChunkBase(ABC):
         Returns:
             tuple[int, bytes]: ID and Size
         """
-
         # Scrambled YADD chunk header
         if id == b"\x4e\x96\x53\x93":
             id = b"YADD"
@@ -40,7 +39,6 @@ class ChunkBase(ABC):
         Returns:
             tuple[int, bytes]: Chunk ID and Payload
         """
-
         buffer = stream.read(8)
         if len(buffer) == 0 or buffer == ChunkBase.END_OF_FILE_MARK:
             # End of File
@@ -64,7 +62,6 @@ class ChunkBase(ABC):
         Returns:
             bytes: ID and Size
         """
-
         buffer = stream.read(8)
         stream.seek(-len(buffer), os.SEEK_CUR)
         if len(buffer) == 0 or buffer == ChunkBase.END_OF_FILE_MARK:
@@ -90,7 +87,6 @@ class ChunkBase(ABC):
         Returns:
             tuple[int, int] | None: If ID and size found, else not found
         """
-
         while True:
             header = ChunkBase.peek_header(stream)
             if header is None:
@@ -113,7 +109,6 @@ class ChunkBase(ABC):
         Returns:
             list[tuple[int, int, bytes]]: List of offset, size and ID
         """
-
         index: list[tuple[int, int, bytes]] = []
 
         last_position = -1
@@ -141,7 +136,6 @@ class ChunkBase(ABC):
         Returns:
             bytes: Payload Buffer
         """
-
         pass
 
     def write(self, stream: BufferedWriter) -> None:
@@ -150,7 +144,6 @@ class ChunkBase(ABC):
         Args:
             stream (BufferedReader): Output stream
         """
-
         payload_buffer = self._payload_buffer()
         stream.write(self.id)
         if len(payload_buffer) % 2 != 0:

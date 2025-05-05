@@ -14,7 +14,6 @@ def read_status_byte(stream: BufferedReader) -> int:
     Returns:
         int: Status Byte
     """
-
     byte = stream.read(1)
     if len(byte) < 1:
         raise ValueError("Too less read bytes.")
@@ -37,7 +36,6 @@ def peek_status_byte(stream: BufferedReader) -> int:
     Returns:
         int: Status Byte
     """
-
     byte = stream.read(1)
     if len(byte) < 1:
         raise ValueError("Too less read bytes.")
@@ -61,7 +59,6 @@ def read_data_byte(stream: BufferedReader) -> int:
     Returns:
         int: Data Byte
     """
-
     byte = stream.read(1)
     if len(byte) < 1:
         raise ValueError("Too less read bytes.")
@@ -84,7 +81,6 @@ def peek_data_byte(stream: BufferedReader) -> int:
     Returns:
         int: Data Byte
     """
-
     byte = stream.read(1)
     if len(byte) < 1:
         raise ValueError("Too less read bytes.")
@@ -105,7 +101,6 @@ def is_data_bytes(data: bytes) -> bool:
     Returns:
         bool: True if Data Bytes, else False
     """
-
     for byte in data:
         if byte & 0x80 == 0x80:
             return False
@@ -124,7 +119,6 @@ def read_variable_int(stream: BufferedReader) -> int:
     Returns:
         int: Variable Int value
     """
-
     value = 0
     for i in range(3):
         byte: int = read_data_byte(stream)
@@ -146,7 +140,6 @@ def write_variable_int(stream: BufferedReader, value: int) -> None:
     Raises:
         ValueError: Invalid argument `value`
     """
-
     if 0x04103F < value:
         raise ValueError("Too big argument `value`. Use write_extended_variable_int.")
 
@@ -195,7 +188,6 @@ def write_extended_variable_int(stream: BufferedReader, value: int) -> None:
         stream (BufferedReader): Output stream
         value (int): Value
     """
-
     while 0x000000 < value:
         write_value = min(value, 0x04103F)
         write_variable_int(stream, write_value)

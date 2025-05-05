@@ -3,16 +3,16 @@ from io import BufferedReader, BufferedWriter, BytesIO
 import os
 from typing import Self
 
+from midi.event import MidiEvent, MidiTrackEvent
 from ..okd_midi import (
     read_status_byte,
     is_data_bytes,
     read_extended_variable_int,
     write_extended_variable_int,
 )
-from ..midi import MidiEvent, MidiTrackEvent
 
-from . import ChunkBase
-from . import GenericChunk
+from .chunk_base import ChunkBase
+from .generic_chunk import GenericChunk
 
 
 @dataclass
@@ -34,7 +34,6 @@ class MTrackEvent(MidiTrackEvent):
         Returns:
             bytes: Data Bytes
         """
-
         data_bytes = b""
         while True:
             byte = stream.read(1)
@@ -63,7 +62,6 @@ class MTrackEvent(MidiTrackEvent):
         Returns:
             Self: Instance of this class
         """
-
         delta_time = read_extended_variable_int(stream)
 
         end_of_track = stream.read(4)
@@ -118,7 +116,6 @@ class MTrackEvent(MidiTrackEvent):
         Args:
             stream (BufferedReader): Output stream
         """
-
         write_extended_variable_int(stream, self.delta_time)
         stream.write(self.status_byte.to_bytes())
         stream.write(self.data_bytes)
@@ -147,7 +144,6 @@ class MTrackChunk(ChunkBase):
         Returns:
             Self: Instance of this class
         """
-
         stream = BytesIO(generic.payload)
         events: list[MTrackEvent] = []
         while True:
@@ -164,7 +160,6 @@ class MTrackChunk(ChunkBase):
         Returns:
             int: Track Number
         """
-
         return self.id[3]
 
     def _payload_buffer(self) -> bytes:

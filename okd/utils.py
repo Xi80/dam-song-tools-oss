@@ -1,6 +1,8 @@
 from logging import getLogger
+
 import mido
 
+from midi.utils import get_meta_track, get_track_by_port_channel
 from okd.okd_file import OkdGenericHeader, OkdFile
 from okd.chunks import (
     MTrackInterpretation,
@@ -12,7 +14,6 @@ from okd.chunks import (
     p_track_info_chunk_by_p_track_chunks,
     p3_track_info_chunk_by_p_track_chunks,
 )
-from okd.midi import get_meta_track, get_track_by_port_channel
 from okd.m_track_conversion import midi_to_m_track
 from okd.p_track_conversion import p_track_to_midi, midi_to_p_tracks, midi_to_p3_track
 
@@ -32,7 +33,6 @@ def okd_to_midi(okd: OkdFile, sysex_to_text: bool) -> mido.MidiFile:
     Returns:
         mido.MidiFile: MIDI file
     """
-
     __logger.info(f"OKD loaded. header={okd.header}")
 
     p_track_info: (
@@ -81,7 +81,6 @@ def midi_to_okds(
     Returns:
         tuple[OkdFile, OkdFile]: P-Track and P3-Track
     """
-
     meta_track = get_meta_track(midi.tracks)
     if meta_track is None:
         raise ValueError("Meta track not found.")

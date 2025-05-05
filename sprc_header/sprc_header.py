@@ -1,9 +1,8 @@
-"""DAM SPRC Header"""
-
 from dataclasses import dataclass
-from fastcrc import crc16
 from io import BufferedReader, BufferedWriter
 from typing import Self
+
+from fastcrc import crc16
 
 
 @dataclass
@@ -27,7 +26,6 @@ class SprcHeader:
         Returns:
             bool: True if source has SPRC header, else False
         """
-
         position = stream.tell()
         buffer = stream.read(16)
         stream.seek(position)
@@ -48,7 +46,6 @@ class SprcHeader:
         Returns:
             Self: Instance of this class
         """
-
         buffer = stream.read(16)
         if len(buffer) < 16:
             raise ValueError(f"Too less read bytes.")
@@ -72,7 +69,6 @@ class SprcHeader:
         Returns:
             bool: True if data is valid, else False
         """
-
         if isinstance(data, BufferedReader):
             # Skip SPRC header
             data.seek(16)
@@ -88,7 +84,6 @@ class SprcHeader:
         Args:
             stream (BufferedWriter): Destination
         """
-
         stream.write(SprcHeader.__MAGIC_BYTES)
         stream.write(self.revision.to_bytes(2, "big"))
         stream.write(self.crc_value.to_bytes(2, "big"))

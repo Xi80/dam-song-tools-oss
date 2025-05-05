@@ -34,7 +34,6 @@ class AdpcmFrame:
         Returns:
             Self: Instance of this class
         """
-
         buffer = stream.read(128)
         if len(buffer) < 128:
             raise ValueError("Too less read bytes.")
@@ -50,7 +49,6 @@ class AdpcmDecoder:
 
     def __init__(self):
         """Constructor"""
-
         self.prev1 = 0
         self.prev2 = 0
 
@@ -64,7 +62,6 @@ class AdpcmDecoder:
         Returns:
             int: int value
         """
-
         if value > 32767.0:
             return 32767
         elif value < -32768.0:
@@ -86,7 +83,6 @@ class AdpcmDecoder:
         Returns:
             int: Decoded sample
         """
-
         shift = sp & 0x0F
         if SHIFT_LIMIT < shift:
             raise ValueError("Parameter `shift` out of range.")
@@ -117,7 +113,6 @@ class AdpcmDecoder:
         Returns:
             list[int]: Decoded subframe
         """
-
         decoded = [0] * SUB_FRAME_NIBBLES
         for i in range(SUB_FRAME_NIBBLES):
             su_index = i * SUB_FRAMES + subframe_index
@@ -135,7 +130,6 @@ class AdpcmDecoder:
         Returns:
             list[int]: Decoded Frame
         """
-
         decoded: list[float] = []
         for i in range(SUB_FRAMES):
             for j in range(2):
@@ -155,7 +149,6 @@ class AdpcmDecoder:
         Returns:
             list[int]: Decoded Frame Group
         """
-
         decoded: list[int] = []
         for _ in range(FRAMES_PER_FRAME_GROUP):
             frame = AdpcmFrame.read(stream)
@@ -171,7 +164,6 @@ class AdpcmDecoder:
         Returns:
             list[int]: Decoded samples
         """
-
         decoded: list[int] = []
         while True:
             try:

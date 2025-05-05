@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
-import mido
 from typing import Union
+
+import mido
 
 
 @dataclass

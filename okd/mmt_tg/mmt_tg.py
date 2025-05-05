@@ -1,8 +1,8 @@
 from logging import getLogger
 
-from ..midi import MidiEvent
+from midi.event import MidiEvent
 
-from . import System, MultiPartEntry
+from .midi_parameter_change_table import System, MultiPartEntry
 
 
 class MmtTg:

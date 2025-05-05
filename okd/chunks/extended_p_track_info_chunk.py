@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from io import BufferedReader, BufferedWriter, BytesIO
 from typing import Self
 
-from . import ChunkBase
-from . import GenericChunk
+from .chunk_base import ChunkBase
+from .generic_chunk import GenericChunk
 
 
 @dataclass
@@ -26,7 +26,6 @@ class ExtendedPTrackInfoChannelInfoEntry:
         Returns:
             Self: Instance of this class
         """
-
         buffer = stream.read(8)
         if len(buffer) < 8:
             raise ValueError("Too less read bytes.")
@@ -44,7 +43,6 @@ class ExtendedPTrackInfoChannelInfoEntry:
         Returns:
             bool: True if Chorus, else False
         """
-
         return self.attribute & 0x0080 != 0x0080
 
     def is_guide_melody(self) -> bool:
@@ -53,7 +51,6 @@ class ExtendedPTrackInfoChannelInfoEntry:
         Returns:
             bool: True if Guide Melody, else False
         """
-
         return self.attribute & 0x0100 == 0x0100
 
     def write(self, stream: BufferedWriter) -> None:
@@ -62,7 +59,6 @@ class ExtendedPTrackInfoChannelInfoEntry:
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(self.attribute.to_bytes(2, "little"))
         stream.write(self.ports.to_bytes(2, "big"))
         stream.write(self.unknown_0.to_bytes(2, "big"))
@@ -93,7 +89,6 @@ class ExtendedPTrackInfoEntry:
         Returns:
             Self: Instance of this class
         """
-
         buffer = stream.read(68)
         if len(buffer) < 68:
             raise ValueError("Too less read bytes.")
@@ -145,7 +140,6 @@ class ExtendedPTrackInfoEntry:
         Args:
             stream (BufferedReader): Output stream
         """
-
         stream.write(self.track_number.to_bytes())
         stream.write(self.track_status.to_bytes())
         stream.write(self.unused_0.to_bytes(2, "big"))
@@ -177,7 +171,6 @@ class ExtendedPTrackInfoChunk(ChunkBase):
         Returns:
             Self: ExtendedPTrackInfoChunk
         """
-
         unknown_0 = generic.payload[0:8]
         tg_mode = int.from_bytes(generic.payload[8:10:3], "big")
         entry_count = int.from_bytes(generic.payload[10:12], "big")
@@ -200,7 +193,6 @@ class ExtendedPTrackInfoChunk(ChunkBase):
         Returns:
             ExtendedPTrackInfoChannelInfoEntry | ExtendedPTrackInfoEntry | Self: Converted instance
         """
-
         if "attribute" in json_object:
             return ExtendedPTrackInfoChannelInfoEntry(
                 json_object["attribute"],

@@ -12,8 +12,9 @@ from .chunks import (
     PTrackAbsoluteTimeEvent,
     PTrackChunk,
 )
-from .midi import MidiEvent, get_track_port
-from .midi_time_converter import MidiTimeConverter
+from midi.event import MidiEvent
+from midi.time_converter import MidiTimeConverter
+from midi.utils import get_track_port
 from .mmt_tg import MultiPartEntry, MmtTg
 
 __logger = getLogger(__name__)
