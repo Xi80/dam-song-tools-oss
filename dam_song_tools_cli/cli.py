@@ -6,8 +6,12 @@ import numpy as np
 import os
 import json
 import soundfile as sf
+import tarfile
+import shutil
+import io
 from typing import Any
 from pydub import AudioSegment
+from pathlib import Path
 
 from okd import (
     YksOkdHeader,
@@ -275,23 +279,45 @@ class Cli:
             self.__logger.info("Write P3 OKD.")
             p3_okd.write(p3_okd_file, scramble)
     
-    def dump_mtf(json_path: str, audio_path: str, output_file: str):
-        """Mix decompressed MTF file into a single WAV file.
+    def dump_mtf(self, audio_path: str, output_path: str, export_each_file: bool = False):
+        """Mix MTF file into a single WAV file in extracted folder.
         
         Args:
-            json_path (str): Directory containing JSON files
-            output_path (str): Output WAV file path
+            audio_path (str): Path to the MTF file
+            output_path (str): Path to extract the archive into, output WAV will be saved inside
+            export_each_file (bool): Whether to export each individual audio file (RawADPCM → .wav, OPUS → .ogg)
         """
         mixed_audio = AudioSegment.silent(duration=0)
 
-        json_path = [
-            audio_path + "/" + "PlayListChorus0.json",
-            audio_path + "/" + "PlayListGuideMelo0.json",
-            audio_path + "/" + "PlayListSynthChorus0.json",
-            audio_path + "/" + "PlayListDrum0.json",
-            audio_path + "/" + "PlayListUpper0.json",
+        with open(audio_path, "rb") as f:
+            data = bytearray(f.read())
+        data[0:4] = b"\x1f\x8b\x08\x00" # GZipヘッダ
+
+        with tarfile.open(fileobj=io.BytesIO(data), mode='r:gz') as tar:
+            tar.extractall(path=output_path)
+            members = tar.getmembers()
+            root_folder_name = members[0].name.split('/')[0] if members else ''
+
+        if not root_folder_name:
+            print("Error: Failed to detect root folder in archive.")
+            return
+
+        extracted_root = os.path.join(output_path, root_folder_name) + '/mtf'
+
+        json_files = [
+            "PlayListChorus0.json",
+            "PlayListGuideMelo0.json",
+            "PlayListSynthChorus0.json",
+            "PlayListDrum0.json",
+            "PlayListUpper0.json",
         ]
-        for json_file in json_path:
+        json_paths = [os.path.join(extracted_root, f) for f in json_files]
+
+        for json_file in json_paths:
+            if not os.path.exists(json_file):
+                print(f"Warning: {json_file} not found, skipping.")
+                continue
+
             with open(json_file, "r", encoding="utf-8") as f:
                 playlist = json.load(f)
 
@@ -299,22 +325,30 @@ class Cli:
 
             for item in playlist.get("AudioPlayListItem", []):
                 file_name = item["file"]
-                start_time = item["start_clk"]  # ミリ秒
-                input_path = os.path.join(audio_path, file_name)
+                start_time = item["start_clk"] # ミリ秒
+                input_path = os.path.join(extracted_root, file_name)
+
+                mtf_audio_processor = MtfAudio()
 
                 if item["codec"] == "RawADPCM":
                     if os.path.exists(input_path):
-                        mtf_audio_processor = MtfAudio()
                         audio = mtf_audio_processor.decode_adpcm(input_path)
                         audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+
+                        if export_each_file:
+                            adpcm_output_path = input_path + '.wav'
+                            audio.export(adpcm_output_path, format='wav')
                     else:
                         print(f"Warning: {input_path} not found, skipping.")
                         continue
                 elif item["codec"] == "OPUS":
                     if os.path.exists(input_path):
-                        mtf_audio_processor = MtfAudio()
                         audio = mtf_audio_processor.decode_opus(input_path)
                         audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+
+                        if export_each_file:
+                            ogg_output_path = input_path + '.ogg'
+                            shutil.copy(input_path, ogg_output_path)
                     else:
                         print(f"Warning: {input_path} not found, skipping.")
                         continue
@@ -328,9 +362,9 @@ class Cli:
                 mixed_audio = mixed_audio.overlay(audio, position=int(start_time))
 
         # Export to a WAV file
-        mixed_audio.export(output_file, format="wav")
-        print(f"Mixed WAV file saved at: {output_file}")
-
+        final_output_path = os.path.join(extracted_root, "output.wav")
+        mixed_audio.export(final_output_path, format="wav")
+        print(f"Mixed WAV file saved at: {final_output_path}")
 
 def main() -> None:
     fire.Fire(Cli)
