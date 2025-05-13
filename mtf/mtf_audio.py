@@ -32,6 +32,10 @@ class MtfAudio:
         config.read(SETTING_FILE)
         return int(config.get("MtfAudio", "OpusVolumeIncrease", fallback=0))
 
+    def decode_others(self, input_file):
+        """Loads Audio File, converts it to AudioSegment"""
+        self.audio = AudioSegment.from_file(input_file)
+
     def apply_vol_events(self, vol_events, start_time):
         """Applies VolEvent"""
         self.audio = self.process_vol_events(vol_events, start_time, "Volume")

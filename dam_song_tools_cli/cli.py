@@ -305,11 +305,15 @@ class Cli:
         extracted_root = os.path.join(output_path, root_folder_name) + '/mtf'
 
         json_files = [
-            "PlayListChorus0.json",
-            "PlayListGuideMelo0.json",
-            "PlayListSynthChorus0.json",
             "PlayListDrum0.json",
             "PlayListUpper0.json",
+            "PlayListGuideMelo0.json",
+            "PlayListSynthChorus0.json",
+            "PlayListMusic0.json",
+            "PlayListChorus0.json",
+            "PlayListGuideVocal00.json",
+            "PlayListGuideVocal10.json",
+            "PlayListGuideVocal20.json",
         ]
         json_paths = [os.path.join(extracted_root, f) for f in json_files]
 
@@ -349,6 +353,39 @@ class Cli:
                         if export_each_file:
                             ogg_output_path = input_path + '.ogg'
                             shutil.copy(input_path, ogg_output_path)
+                    else:
+                        print(f"Warning: {input_path} not found, skipping.")
+                        continue
+                elif item["codec"] == "MP3":
+                    if os.path.exists(input_path):
+                        audio = mtf_audio_processor.decode_others(input_path)
+                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+
+                        if export_each_file:
+                            mp3_output_path = input_path + '.mp3'
+                            shutil.copy(input_path, mp3_output_path)
+                    else:
+                        print(f"Warning: {input_path} not found, skipping.")
+                        continue
+                elif item["codec"] == "AAC":
+                    if os.path.exists(input_path):
+                        audio = mtf_audio_processor.decode_others(input_path)
+                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+
+                        if export_each_file:
+                            aac_output_path = input_path + '.aac'
+                            shutil.copy(input_path, aac_output_path)
+                    else:
+                        print(f"Warning: {input_path} not found, skipping.")
+                        continue
+                elif item["codec"] == "FLAC":
+                    if os.path.exists(input_path):
+                        audio = mtf_audio_processor.decode_others(input_path)
+                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
+
+                        if export_each_file:
+                            flac_output_path = input_path + '.flac'
+                            shutil.copy(input_path, flac_output_path)
                     else:
                         print(f"Warning: {input_path} not found, skipping.")
                         continue
