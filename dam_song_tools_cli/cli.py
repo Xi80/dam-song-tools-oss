@@ -29,6 +29,8 @@ from okd import (
 )
 
 from mtf import MtfAudio
+from mtf import note_events_conversion
+from mtf.note_events_conversion import NoteEvent
 
 def default(item: Any):
     match item:
@@ -304,7 +306,7 @@ class Cli:
 
         extracted_root = os.path.join(output_path, root_folder_name, 'mtf')
 
-        json_files = {
+        playlist_files = {
             "PlayListDrum0.json": "Drum",
             "PlayListUpper0.json": "Upper",
             "PlayListGuideMelo0.json": "GuideMelody",
@@ -316,10 +318,10 @@ class Cli:
             "PlayListGuideVocal20.json": "GuideVocalFemale",
         }
 
-        for json_file in json_files:
-            json_path = os.path.join(extracted_root, json_file)
+        for playlist_file in playlist_files:
+            json_path = os.path.join(extracted_root, playlist_file)
             if not os.path.exists(json_path):
-                self.__logger.info(f"{json_files[json_file]} track not found, skipping.")
+                self.__logger.info(f"{playlist_files[playlist_file]} track not found, skipping.")
                 continue
 
             with open(json_path, "r", encoding="utf-8") as f:
@@ -402,6 +404,34 @@ class Cli:
         final_output_path = os.path.join(extracted_root, "output.wav")
         mixed_audio.export(final_output_path, format="wav")
         self.__logger.info(f"Mixed WAV file saved at: {final_output_path}")
+
+        ref_files = {
+            "RefGuideMelo.json": "GuideMelody",
+            "RefChorus.json": "AdpcmChorus",
+            "RefGuideVocal0.json": "GuideVocal",
+            "RefGuideVocal1.json": "GuideVocalMale",
+            "RefGuideVocal2.json": "GuideVocalFemale",
+        }
+
+        for ref_file in ref_files:
+            json_path = os.path.join(extracted_root, ref_file)
+            if not os.path.exists(json_path):
+                self.__logger.info(f"{ref_files[ref_file]} ref not found, skipping.")
+                continue
+
+            with open(json_path, "r", encoding="utf-8") as f:
+                ref = json.load(f)
+
+            note_events: list[NoteEvent] = []
+
+            for item in ref.get("Pitch", []):
+                note_event = NoteEvent(item["StartClk"], item["EndClk"], item["Note"])
+                note_events.append(note_event)
+
+            midi = note_events_conversion.note_event_to_midi(note_events)
+            midi_output_path = os.path.join(os.path.dirname(json_path), os.path.basename(json_path) + ".mid")
+            midi.save(midi_output_path)
+            self.__logger.info(f"Ref midi file saved at: {midi_output_path}")
 
 def main() -> None:
     fire.Fire(Cli)
