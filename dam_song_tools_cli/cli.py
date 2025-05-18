@@ -277,7 +277,7 @@ class Cli:
         
         Args:
             mtf_path (str): Path to the MTF file
-            output_path (str): Path to extract the archive into, output WAV will be saved inside
+            output_path (str): Path to extract the archive into
         """
         mtf_conversion.extract_mtf(mtf_path, output_path)
 
@@ -286,7 +286,7 @@ class Cli:
 
         Args:
             mtf_path (str): Path to the MTF file
-            output_path (str): Path to extract the archive into, output WAV will be saved inside
+            output_path (str): Path to extract the archive into, output will be saved inside
             export_each_file (bool): Whether to export each individual audio file (RawADPCM → .wav, OPUS → .ogg, etc...)
         """
         mtf_root_path = mtf_conversion.extract_mtf(mtf_path, output_path)
