@@ -38,70 +38,79 @@ class MtfAudio:
 
     def apply_vol_events(self, vol_events, start_time):
         """Applies VolEvent"""
-        self.audio = self.process_vol_events(vol_events, start_time, "Volume")
-        self.audio = self.process_vol_events(vol_events, start_time, "Velocity")
-        self.audio = self.process_vol_events(vol_events, start_time, "Pan")
+        for evt_type in ["Velocity", "Pan", "AdpcmVol", "RelVol", "RecBoostVol", "AdpcmRev"]:
+            self.audio = self.process_vol_events(vol_events, start_time, evt_type)
         return self.audio
 
     def process_vol_events(self, vol_events, start_time, apply_type):
         """Processes audio VolEvent"""
         # Initial Values
-        if apply_type == "Velocity":
-            apply_value = 1.0
-        elif apply_type == "Pan":
-            apply_value = 0.0
-        elif apply_type == "AdpcmVol":
-            apply_value = 1.0
+        value_map = {
+            "Velocity": 1.0,
+            "Pan": 0.0,
+            "AdpcmVol": 1.0,
+            "RelVol": 1.0,
+            "RecBoostVol": 0.0,  # dB
+            "AdpcmRev": 0        # Not Implemented
+        }
+        apply_value = value_map.get(apply_type)
 
         # Applies VolEvents before start_time
         for event in sorted(vol_events, key=lambda e: e["clock"]):
             if event["clock"] > start_time:
                 break
-            if event["type"] == "Velocity" and apply_type == "Velocity":
-                apply_value = event["value"] / 127.0
-            elif event["type"] == "Pan" and apply_type == "Pan":
-                apply_value = (event["value"] / 100.0) if -100 <= event["value"] <= 100 else 0
-            elif event["type"] == "AdpcmVol" and apply_type == "AdpcmVol":
-                apply_value = event["value"] / 127.0
+            if event["type"] == apply_type:
+                if apply_type in ["Velocity", "AdpcmVol", "RelVol"]:
+                    apply_value = event["value"] / 127.0
+                elif apply_type == "Pan":
+                    apply_value = (event["value"] / 100.0) if -100 <= event["value"] <= 100 else 0
+                elif apply_type == "RecBoostVol":
+                    apply_value = event["value"]
+                elif apply_type == "AdpcmRev":
+                    apply_value = event["value"]
 
-        new_audio = self.audio
-
-        # Audio at start_time
-        if apply_type == "Velocity":
-            new_audio = self.audio + (20 * np.log10(apply_value))  # Velocity
-        elif apply_type == "Pan":
-            new_audio = self.audio.pan(apply_value)
-        elif apply_type == "AdpcmVol":
-            new_audio = self.audio + (20 * np.log10(apply_value))  # Volume
+        audio = self.apply_effect(self.audio, apply_type, apply_value)
 
         # Applies VolEvents after start_time
         for event in sorted(vol_events, key=lambda e: e["clock"]):
-            if event["clock"] < start_time:
+            if event["clock"] < start_time or event["type"] != apply_type:
                 continue
 
-            event_time = event["clock"] - start_time
-
-            if apply_type == "Velocity":
-                if event["type"] != "Velocity":
-                    continue
+            rel_time = event["clock"] - start_time
+            if apply_type in ["Velocity", "AdpcmVol", "RelVol"]:
                 apply_value = event["value"] / 127.0
             elif apply_type == "Pan":
-                if event["type"] != "Pan":
-                    continue
                 apply_value = (event["value"] / 100.0) if -100 <= event["value"] <= 100 else 0
-            elif apply_type == "AdpcmVol":
-                if event["type"] != "AdpcmVol":
-                    continue
-                apply_value = event["value"] / 127.0
+            elif apply_type == "RecBoostVol":
+                apply_value = event["value"]
+            elif apply_type == "AdpcmRev":
+                apply_value = event["value"]
 
-            segment = self.audio[event_time:]
-            if apply_type == "Velocity":
-                segment = segment + (20 * np.log10(apply_value))
-            elif apply_type == "Pan":
-                segment = segment.pan(apply_value)
-            elif apply_type == "AdpcmVol":
-                segment = segment + (20 * np.log10(apply_value))
+            segment = self.audio[rel_time:]
+            segment = self.apply_effect(segment, apply_type, apply_value)
+            audio = audio[:rel_time] + segment
 
-            new_audio = new_audio[:event_time] + segment
+        return audio
 
-        return new_audio
+    def apply_effect(self, segment, effect_type, value):
+        """Applies an Effect"""
+        if effect_type == "Velocity":
+            if value <= 0:
+                return segment - 120  # mute
+            gain = 20 * np.log10(value)
+            return segment + gain
+        elif effect_type == "Pan":
+            return segment.pan(value)
+        elif effect_type == "AdpcmVol":
+            if value <= 0:
+                return segment - 120
+            gain = 20 * np.log10(value)
+            return segment + gain
+        elif effect_type == "RelVol":
+            if value <= 0:
+                return segment - 120
+            gain = 20 * np.log10(value)
+            return segment + gain
+        elif effect_type == "RecBoostVol":
+            return segment - value
+        return segment

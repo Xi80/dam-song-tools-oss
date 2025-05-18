@@ -299,30 +299,30 @@ class Cli:
             root_folder_name = members[0].name.split('/')[0] if members else ''
 
         if not root_folder_name:
-            print("Error: Failed to detect root folder in archive.")
+            self.__logger.error(f"Failed to detect root folder in archive.")
             return
 
-        extracted_root = os.path.join(output_path, root_folder_name) + '/mtf'
+        extracted_root = os.path.join(output_path, root_folder_name, 'mtf')
 
-        json_files = [
-            "PlayListDrum0.json",
-            "PlayListUpper0.json",
-            "PlayListGuideMelo0.json",
-            "PlayListSynthChorus0.json",
-            "PlayListMusic0.json",
-            "PlayListChorus0.json",
-            "PlayListGuideVocal00.json",
-            "PlayListGuideVocal10.json",
-            "PlayListGuideVocal20.json",
-        ]
-        json_paths = [os.path.join(extracted_root, f) for f in json_files]
+        json_files = {
+            "PlayListDrum0.json": "Drum",
+            "PlayListUpper0.json": "Upper",
+            "PlayListGuideMelo0.json": "GuideMelody",
+            "PlayListSynthChorus0.json": "SynthChorus",
+            "PlayListMusic0.json": "MixedMusic",
+            "PlayListChorus0.json": "AdpcmChorus",
+            "PlayListGuideVocal00.json": "GuideVocal",
+            "PlayListGuideVocal10.json": "GuideVocalMale",
+            "PlayListGuideVocal20.json": "GuideVocalFemale",
+        }
 
-        for json_file in json_paths:
-            if not os.path.exists(json_file):
-                print(f"Warning: {json_file} not found, skipping.")
+        for json_file in json_files:
+            json_path = os.path.join(extracted_root, json_file)
+            if not os.path.exists(json_path):
+                self.__logger.info(f"{json_files[json_file]} track not found, skipping.")
                 continue
 
-            with open(json_file, "r", encoding="utf-8") as f:
+            with open(json_path, "r", encoding="utf-8") as f:
                 playlist = json.load(f)
 
             vol_events = playlist.get("VolEvent", [])
@@ -343,7 +343,7 @@ class Cli:
                             adpcm_output_path = input_path + '.wav'
                             audio.export(adpcm_output_path, format='wav')
                     else:
-                        print(f"Warning: {input_path} not found, skipping.")
+                        self.__logger.warning(f"{input_path} not found, skipping.")
                         continue
                 elif item["codec"] == "OPUS":
                     if os.path.exists(input_path):
@@ -354,7 +354,7 @@ class Cli:
                             ogg_output_path = input_path + '.ogg'
                             shutil.copy(input_path, ogg_output_path)
                     else:
-                        print(f"Warning: {input_path} not found, skipping.")
+                        self.__logger.warning(f"{input_path} not found, skipping.")
                         continue
                 elif item["codec"] == "MP3":
                     if os.path.exists(input_path):
@@ -365,7 +365,7 @@ class Cli:
                             mp3_output_path = input_path + '.mp3'
                             shutil.copy(input_path, mp3_output_path)
                     else:
-                        print(f"Warning: {input_path} not found, skipping.")
+                        self.__logger.warning(f"{input_path} not found, skipping.")
                         continue
                 elif item["codec"] == "AAC":
                     if os.path.exists(input_path):
@@ -376,7 +376,7 @@ class Cli:
                             aac_output_path = input_path + '.aac'
                             shutil.copy(input_path, aac_output_path)
                     else:
-                        print(f"Warning: {input_path} not found, skipping.")
+                        self.__logger.warning(f"{input_path} not found, skipping.")
                         continue
                 elif item["codec"] == "FLAC":
                     if os.path.exists(input_path):
@@ -387,10 +387,10 @@ class Cli:
                             flac_output_path = input_path + '.flac'
                             shutil.copy(input_path, flac_output_path)
                     else:
-                        print(f"Warning: {input_path} not found, skipping.")
+                        self.__logger.warning(f"{input_path} not found, skipping.")
                         continue
                 else:
-                    print(f"Warning: Unsupported codec {item['codec']}, skipping.")
+                    self.__logger.warning(f"Unsupported codec {item['codec']}, skipping.")
                     continue
 
                 # MIX
@@ -401,7 +401,7 @@ class Cli:
         # Export to a WAV file
         final_output_path = os.path.join(extracted_root, "output.wav")
         mixed_audio.export(final_output_path, format="wav")
-        print(f"Mixed WAV file saved at: {final_output_path}")
+        self.__logger.info(f"Mixed WAV file saved at: {final_output_path}")
 
 def main() -> None:
     fire.Fire(Cli)
