@@ -272,15 +272,24 @@ class Cli:
             self.__logger.info("Write P3 OKD.")
             p3_okd.write(p3_okd_file, scramble)
     
-    def dump_mtf(self, audio_path: str, output_path: str, export_each_file: bool = False):
-        """Mix MTF file into a single WAV file in extracted folder.
+    def dump_mtf(self, mtf_path: str, output_path: str):
+        """Dump files contained in a MTF file
         
         Args:
-            audio_path (str): Path to the MTF file
+            mtf_path (str): Path to the MTF file
+            output_path (str): Path to extract the archive into, output WAV will be saved inside
+        """
+        mtf_conversion.extract_mtf(mtf_path, output_path)
+
+    def mtf_to_audio(self, mtf_path: str, output_path: str, export_each_file: bool = False):
+        """Mix MTF file into "output.wav", "output.mid" files in extracted mtf folder.
+
+        Args:
+            mtf_path (str): Path to the MTF file
             output_path (str): Path to extract the archive into, output WAV will be saved inside
             export_each_file (bool): Whether to export each individual audio file (RawADPCM → .wav, OPUS → .ogg, etc...)
         """
-        mtf_root_path = mtf_conversion.extract_mtf(audio_path, output_path)
+        mtf_root_path = mtf_conversion.extract_mtf(mtf_path, output_path)
         mtf_conversion.dump_playlist(mtf_root_path, export_each_file)
         mtf_conversion.dump_refs(mtf_root_path, export_each_file)
 
