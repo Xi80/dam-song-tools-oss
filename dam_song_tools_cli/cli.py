@@ -4,14 +4,7 @@ import logging
 import mido
 import numpy as np
 import os
-import json
-import soundfile as sf
-import tarfile
-import shutil
-import io
 from typing import Any
-from pydub import AudioSegment
-from pathlib import Path
 
 from okd import (
     YksOkdHeader,
@@ -28,12 +21,7 @@ from okd import (
     midi_to_okds,
 )
 
-from mtf import MtfAudio
-from mtf import note_events_conversion
-from mtf.note_events_conversion import NoteEvent
-from mtf import saiten_ref_conversion
-from mtf.saiten_ref_conversion import SaitenRefEvent
-from mtf.saiten_ref_conversion import SaitenRefEventType
+from mtf import mtf_conversion
 
 def default(item: Any):
     match item:
@@ -292,181 +280,10 @@ class Cli:
             output_path (str): Path to extract the archive into, output WAV will be saved inside
             export_each_file (bool): Whether to export each individual audio file (RawADPCM → .wav, OPUS → .ogg, etc...)
         """
-        mixed_audio = AudioSegment.silent(duration=0)
+        mtf_root_path = mtf_conversion.extract_mtf(audio_path, output_path)
+        mtf_conversion.dump_playlist(mtf_root_path, export_each_file)
+        mtf_conversion.dump_refs(mtf_root_path, export_each_file)
 
-        with open(audio_path, "rb") as f:
-            data = bytearray(f.read())
-        data[0:4] = b"\x1f\x8b\x08\x00" # GZip header
-
-        with tarfile.open(fileobj=io.BytesIO(data), mode='r:gz') as tar:
-            tar.extractall(path=output_path)
-            members = tar.getmembers()
-            root_folder_name = members[0].name.split('/')[0] if members else ''
-
-        if not root_folder_name:
-            self.__logger.error(f"Failed to detect root folder in archive.")
-            return
-
-        extracted_root = os.path.join(output_path, root_folder_name, 'mtf')
-
-        playlist_files = {
-            "PlayListDrum0.json": "Drum",
-            "PlayListUpper0.json": "Upper",
-            "PlayListGuideMelo0.json": "GuideMelody",
-            "PlayListSynthChorus0.json": "SynthChorus",
-            "PlayListMusic0.json": "MixedMusic",
-            "PlayListChorus0.json": "AdpcmChorus",
-            "PlayListGuideVocal00.json": "GuideVocal",
-            "PlayListGuideVocal10.json": "GuideVocalMale",
-            "PlayListGuideVocal20.json": "GuideVocalFemale",
-        }
-
-        for playlist_file in playlist_files:
-            json_path = os.path.join(extracted_root, playlist_file)
-            if not os.path.exists(json_path):
-                self.__logger.info(f"{playlist_files[playlist_file]} track not found, skipping.")
-                continue
-
-            with open(json_path, "r", encoding="utf-8") as f:
-                playlist = json.load(f)
-
-            vol_events = playlist.get("VolEvent", [])
-
-            for item in playlist.get("AudioPlayListItem", []):
-                file_name = item["file"]
-                start_time = item["start_clk"] # ms
-                input_path = os.path.join(extracted_root, file_name)
-
-                mtf_audio_processor = MtfAudio()
-
-                if item["codec"] == "RawADPCM":
-                    if os.path.exists(input_path):
-                        audio = mtf_audio_processor.decode_adpcm(input_path)
-                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
-
-                        if export_each_file:
-                            adpcm_output_path = input_path + '.wav'
-                            audio.export(adpcm_output_path, format='wav')
-                    else:
-                        self.__logger.warning(f"{input_path} not found, skipping.")
-                        continue
-                elif item["codec"] == "OPUS":
-                    if os.path.exists(input_path):
-                        audio = mtf_audio_processor.decode_opus(input_path)
-                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
-
-                        if export_each_file:
-                            ogg_output_path = input_path + '.ogg'
-                            shutil.copy(input_path, ogg_output_path)
-                    else:
-                        self.__logger.warning(f"{input_path} not found, skipping.")
-                        continue
-                elif item["codec"] == "MP3":
-                    if os.path.exists(input_path):
-                        audio = mtf_audio_processor.decode_others(input_path)
-                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
-
-                        if export_each_file:
-                            mp3_output_path = input_path + '.mp3'
-                            shutil.copy(input_path, mp3_output_path)
-                    else:
-                        self.__logger.warning(f"{input_path} not found, skipping.")
-                        continue
-                elif item["codec"] == "AAC":
-                    if os.path.exists(input_path):
-                        audio = mtf_audio_processor.decode_others(input_path)
-                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
-
-                        if export_each_file:
-                            aac_output_path = input_path + '.aac'
-                            shutil.copy(input_path, aac_output_path)
-                    else:
-                        self.__logger.warning(f"{input_path} not found, skipping.")
-                        continue
-                elif item["codec"] == "FLAC":
-                    if os.path.exists(input_path):
-                        audio = mtf_audio_processor.decode_others(input_path)
-                        audio = mtf_audio_processor.apply_vol_events(vol_events, start_time)
-
-                        if export_each_file:
-                            flac_output_path = input_path + '.flac'
-                            shutil.copy(input_path, flac_output_path)
-                    else:
-                        self.__logger.warning(f"{input_path} not found, skipping.")
-                        continue
-                else:
-                    self.__logger.warning(f"Unsupported codec {item['codec']}, skipping.")
-                    continue
-
-                # MIX
-                if len(mixed_audio) < start_time + len(audio):
-                    mixed_audio = mixed_audio.append(AudioSegment.silent(duration=start_time + len(audio) - len(mixed_audio)), crossfade=0)
-                mixed_audio = mixed_audio.overlay(audio, position=int(start_time))
-
-        # Export to a WAV file
-        final_output_path = os.path.join(extracted_root, "output.wav")
-        mixed_audio.export(final_output_path, format="wav")
-        self.__logger.info(f"Mixed WAV file saved at: {final_output_path}")
-
-        # Prepare MidiFile
-        midi = mido.MidiFile(ticks_per_beat=480)
-
-        song_property_file = "SongProperty.json"
-
-        json_path = os.path.join(extracted_root, song_property_file)
-
-        with open(json_path, "r", encoding="utf-8") as f:
-            song_property = json.load(f)
-
-        saiten_ref_events: list[NoteEvent] = []
-
-        for item in song_property.get("SaitenRef", []):
-            saiten_ref_event = SaitenRefEvent(
-                item["Clock"], SaitenRefEventType.value_of(item["msg"][0]), item["msg"][1], item["msg"][2]
-            )
-            saiten_ref_events.append(saiten_ref_event)
-
-        saiten_ref_midi = saiten_ref_conversion.saiten_ref_to_midi(saiten_ref_events)
-        for track in saiten_ref_midi.tracks:
-            midi.tracks.append(track)
-        if export_each_file:
-            saiten_ref_midi_output_path = os.path.join(extracted_root, song_property_file + ".mid")
-            saiten_ref_midi.save(saiten_ref_midi_output_path)
-
-        ref_files = {
-            "RefGuideMelo.json": {"description": "GuideMelody", "port": 0, "channel": 0}, # Port 0 Channel 0 (Not compatible with OKD)
-            "RefChorus.json": {"description": "Chorus", "port": 0, "channel": 1}, # Port 0 Channel 1 (Not compatible with OKD)
-            "RefGuideVocal0.json": {"description": "GuideVocal", "port": 0, "channel": 2}, # Port 0 Channel 2 (Not compatible with OKD)
-            "RefGuideVocal1.json": {"description": "GuideVocalMale", "port": 0, "channel": 3}, # Port 0 Channel 3 (Not compatible with OKD)
-            "RefGuideVocal2.json": {"description": "GuideVocalFemale", "port": 0, "channel": 4}, # Port 0 Channel 4 (Not compatible with OKD)
-        }
-
-        for ref_file in ref_files:
-            json_path = os.path.join(extracted_root, ref_file)
-            if not os.path.exists(json_path):
-                self.__logger.info(f"{ref_files[ref_file]["description"]} ref not found, skipping.")
-                continue
-
-            with open(json_path, "r", encoding="utf-8") as f:
-                ref = json.load(f)
-
-            note_events: list[NoteEvent] = []
-
-            for item in ref.get("Pitch", []):
-                note_event = NoteEvent(item["StartClk"], item["EndClk"], item["Note"])
-                note_events.append(note_event)
-
-            ref_midi = note_events_conversion.note_event_to_midi(note_events, ref_files[ref_file]["port"], ref_files[ref_file]["channel"])
-            for track in ref_midi.tracks:
-                midi.tracks.append(track)
-            if export_each_file:
-                ref_midi_output_path = os.path.join(os.path.dirname(json_path), os.path.basename(json_path) + ".mid")
-                midi.save(ref_midi_output_path)
-
-        # Export to a SMF file
-        final_output_path = os.path.join(extracted_root, "output.mid")
-        midi.save(final_output_path)
-        self.__logger.info(f"Mixed SMF file saved at: {final_output_path}")
 
 def main() -> None:
     fire.Fire(Cli)
