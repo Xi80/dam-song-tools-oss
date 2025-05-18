@@ -24,6 +24,7 @@ ENV PATH=/home/python/.local/bin:$PATH
 WORKDIR /app
 
 COPY pyproject.toml poetry.lock README.md settings.ini /app/
+COPY midi/ midi/
 COPY okd/ okd/
 COPY mtf/ mtf/
 COPY sprc_header/ sprc_header/
