@@ -31,6 +31,9 @@ from okd import (
 from mtf import MtfAudio
 from mtf import note_events_conversion
 from mtf.note_events_conversion import NoteEvent
+from mtf import saiten_ref_conversion
+from mtf.saiten_ref_conversion import SaitenRefEvent
+from mtf.saiten_ref_conversion import SaitenRefEventType
 
 def default(item: Any):
     match item:
@@ -287,13 +290,13 @@ class Cli:
         Args:
             audio_path (str): Path to the MTF file
             output_path (str): Path to extract the archive into, output WAV will be saved inside
-            export_each_file (bool): Whether to export each individual audio file (RawADPCM → .wav, OPUS → .ogg)
+            export_each_file (bool): Whether to export each individual audio file (RawADPCM → .wav, OPUS → .ogg, etc...)
         """
         mixed_audio = AudioSegment.silent(duration=0)
 
         with open(audio_path, "rb") as f:
             data = bytearray(f.read())
-        data[0:4] = b"\x1f\x8b\x08\x00" # GZipヘッダ
+        data[0:4] = b"\x1f\x8b\x08\x00" # GZip header
 
         with tarfile.open(fileobj=io.BytesIO(data), mode='r:gz') as tar:
             tar.extractall(path=output_path)
@@ -331,7 +334,7 @@ class Cli:
 
             for item in playlist.get("AudioPlayListItem", []):
                 file_name = item["file"]
-                start_time = item["start_clk"] # ミリ秒
+                start_time = item["start_clk"] # ms
                 input_path = os.path.join(extracted_root, file_name)
 
                 mtf_audio_processor = MtfAudio()
@@ -405,18 +408,43 @@ class Cli:
         mixed_audio.export(final_output_path, format="wav")
         self.__logger.info(f"Mixed WAV file saved at: {final_output_path}")
 
+        # Prepare MidiFile
+        midi = mido.MidiFile(ticks_per_beat=480)
+
+        song_property_file = "SongProperty.json"
+
+        json_path = os.path.join(extracted_root, song_property_file)
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            song_property = json.load(f)
+
+        saiten_ref_events: list[NoteEvent] = []
+
+        for item in song_property.get("SaitenRef", []):
+            saiten_ref_event = SaitenRefEvent(
+                item["Clock"], SaitenRefEventType.value_of(item["msg"][0]), item["msg"][1], item["msg"][2]
+            )
+            saiten_ref_events.append(saiten_ref_event)
+
+        saiten_ref_midi = saiten_ref_conversion.saiten_ref_to_midi(saiten_ref_events)
+        for track in saiten_ref_midi.tracks:
+            midi.tracks.append(track)
+        if export_each_file:
+            saiten_ref_midi_output_path = os.path.join(extracted_root, song_property_file + ".mid")
+            saiten_ref_midi.save(saiten_ref_midi_output_path)
+
         ref_files = {
-            "RefGuideMelo.json": "GuideMelody",
-            "RefChorus.json": "AdpcmChorus",
-            "RefGuideVocal0.json": "GuideVocal",
-            "RefGuideVocal1.json": "GuideVocalMale",
-            "RefGuideVocal2.json": "GuideVocalFemale",
+            "RefGuideMelo.json": {"description": "GuideMelody", "port": 0, "channel": 0}, # Port 0 Channel 0 (Not compatible with OKD)
+            "RefChorus.json": {"description": "Chorus", "port": 0, "channel": 1}, # Port 0 Channel 1 (Not compatible with OKD)
+            "RefGuideVocal0.json": {"description": "GuideVocal", "port": 0, "channel": 2}, # Port 0 Channel 2 (Not compatible with OKD)
+            "RefGuideVocal1.json": {"description": "GuideVocalMale", "port": 0, "channel": 3}, # Port 0 Channel 3 (Not compatible with OKD)
+            "RefGuideVocal2.json": {"description": "GuideVocalFemale", "port": 0, "channel": 4}, # Port 0 Channel 4 (Not compatible with OKD)
         }
 
         for ref_file in ref_files:
             json_path = os.path.join(extracted_root, ref_file)
             if not os.path.exists(json_path):
-                self.__logger.info(f"{ref_files[ref_file]} ref not found, skipping.")
+                self.__logger.info(f"{ref_files[ref_file]["description"]} ref not found, skipping.")
                 continue
 
             with open(json_path, "r", encoding="utf-8") as f:
@@ -428,10 +456,17 @@ class Cli:
                 note_event = NoteEvent(item["StartClk"], item["EndClk"], item["Note"])
                 note_events.append(note_event)
 
-            midi = note_events_conversion.note_event_to_midi(note_events)
-            midi_output_path = os.path.join(os.path.dirname(json_path), os.path.basename(json_path) + ".mid")
-            midi.save(midi_output_path)
-            self.__logger.info(f"Ref midi file saved at: {midi_output_path}")
+            ref_midi = note_events_conversion.note_event_to_midi(note_events, ref_files[ref_file]["port"], ref_files[ref_file]["channel"])
+            for track in ref_midi.tracks:
+                midi.tracks.append(track)
+            if export_each_file:
+                ref_midi_output_path = os.path.join(os.path.dirname(json_path), os.path.basename(json_path) + ".mid")
+                midi.save(ref_midi_output_path)
+
+        # Export to a SMF file
+        final_output_path = os.path.join(extracted_root, "output.mid")
+        midi.save(final_output_path)
+        self.__logger.info(f"Mixed SMF file saved at: {final_output_path}")
 
 def main() -> None:
     fire.Fire(Cli)
