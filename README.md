@@ -169,7 +169,7 @@ Please check [the test data](test/data/p_track.mid).
 
 ## Authors
 
-- soltia48
+- KIRISHIKI Yudai
 
 ## Thanks
 
@@ -179,4 +179,4 @@ Please check [the test data](test/data/p_track.mid).
 
 [MIT](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2024-2025 soltia48
+Copyright (c) 2024-2025 KIRISHIKI Yudai

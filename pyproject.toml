@@ -2,13 +2,15 @@
 name = "dam-song-tools"
 version = "0.1.0"
 description = "Tools for DAM Karaoke Song data"
-authors = ["soltia48 <soltia48@protonmail.com>"]
+authors = ["KIRISHIKI Yudai <yudai.kirishiki@protonmail.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-    {include = "sprc_header"},
+    {include = "dam_song_tools_cli"},
+    {include = "midi"},
+    {include = "mtf"},
     {include = "okd"},
-    {include = "dam_song_tools_cli"}
+    {include = "sprc_header"}
 ]
 
 [tool.poetry.scripts]
