@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from io import BufferedReader, BufferedWriter, BytesIO
-from typing import Self
+from io import BytesIO
+from typing import BinaryIO, Self
 
 from .chunk_base import ChunkBase
 from .generic_chunk import GenericChunk
@@ -16,11 +16,11 @@ class PTrackInfoChannelInfoEntry:
     control_change_cx: int
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             Self: Instance of this class
@@ -52,11 +52,11 @@ class PTrackInfoChannelInfoEntry:
 
         return self.attribute & 0x80 != 0x80
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         stream.write(self.attribute.to_bytes())
         stream.write(self.ports.to_bytes())
@@ -77,11 +77,11 @@ class PTrackInfoEntry:
     system_ex_ports: int
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             Self: Instance of this class
@@ -114,7 +114,7 @@ class PTrackInfoEntry:
             offset = 2 * channel
             channel_groups.append(int.from_bytes(buffer[offset : offset + 2], "big"))
 
-        channel_info: list[int] = []
+        channel_info: list[PTrackInfoChannelInfoEntry] = []
         for channel in range(16):
             channel_info.append(PTrackInfoChannelInfoEntry.read(stream))
 
@@ -137,11 +137,11 @@ class PTrackInfoEntry:
     def is_lossless_track(self) -> bool:
         return self.track_status & 0x80 == 0x80
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         stream.write(self.track_number.to_bytes())
         stream.write(self.track_status.to_bytes())
@@ -180,38 +180,6 @@ class PTrackInfoChunk(ChunkBase):
             entry = PTrackInfoEntry.read(stream)
             p_track_info.append(entry)
         return cls(generic.id, p_track_info)
-
-    @classmethod
-    def from_json_object(
-        cls, json_object: object
-    ) -> PTrackInfoChannelInfoEntry | PTrackInfoEntry | Self:
-        """From JSON Object
-
-        Args:
-            json_object (object): JSON Object
-
-        Returns:
-            PTrackInfoChannelInfoEntry | PTrackInfoEntry | Self: Converted instance
-        """
-        if "attribute" in json_object:
-            return PTrackInfoChannelInfoEntry(
-                json_object["attribute"],
-                json_object["ports"],
-                json_object["control_change_ax"],
-                json_object["control_change_cx"],
-            )
-        elif "track_number" in json_object:
-            return PTrackInfoEntry(
-                json_object["track_number"],
-                json_object["track_status"],
-                json_object["use_channel_group_flag"],
-                json_object["default_channel_groups"],
-                json_object["channel_groups"],
-                json_object["channel_info"],
-                json_object["system_ex_ports"],
-            )
-        elif "data" in json_object:
-            return cls(json_object["data"])
 
     def _payload_buffer(self) -> bytes:
         buffer = len(self.data).to_bytes(2, "big")

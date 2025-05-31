@@ -1,4 +1,4 @@
-from io import BufferedReader
+from typing import BinaryIO
 
 from .generic_chunk import GenericChunk
 from .p_track_info_chunk import (
@@ -18,7 +18,7 @@ from .adpcm_chunk import AdpcmChunk
 from .okd_chunk import OkdChunk
 
 
-def read_chunk(stream: BufferedReader) -> OkdChunk:
+def read_chunk(stream: BinaryIO) -> OkdChunk:
     """Read Chunk
 
     Args:
@@ -49,7 +49,7 @@ def p_track_info_chunk_by_p_track_chunks(
     p_track_chunks: list[PTrackChunk],
 ) -> PTrackInfoChunk | ExtendedPTrackInfoChunk:
     if len(p_track_chunks) <= 2:
-        p_track_info_entries: list[PTrackInfoEntry] = []
+        p_track_info_entries_1: list[PTrackInfoEntry] = []
         for p_track_chunk in p_track_chunks:
             ports = (
                 0x0001
@@ -57,13 +57,13 @@ def p_track_info_chunk_by_p_track_chunks(
             )
             sysex_ports = 4 if p_track_chunk.track_number() >= 2 else 1
 
-            track_info_channel_info_entries: list[PTrackInfoChannelInfoEntry] = []
+            track_info_channel_info_entries_1: list[PTrackInfoChannelInfoEntry] = []
             for channel in range(16):
                 exists_message = p_track_chunk.exists_channel_message(channel)
                 channel_attribute = (
                     127 if p_track_chunk.track_number() == 1 and channel == 9 else 255
                 )
-                track_info_channel_info_entries.append(
+                track_info_channel_info_entries_1.append(
                     PTrackInfoChannelInfoEntry(
                         channel_attribute if exists_message else 0,
                         ports,
@@ -72,22 +72,22 @@ def p_track_info_chunk_by_p_track_chunks(
                     )
                 )
 
-            p_track_info_entries.append(
+            p_track_info_entries_1.append(
                 PTrackInfoEntry(
                     p_track_chunk.track_number(),
                     0x40,
                     0x0000,
                     [0] * 16,
                     [0] * 16,
-                    track_info_channel_info_entries,
+                    track_info_channel_info_entries_1,
                     sysex_ports,
                 )
             )
 
-        return PTrackInfoChunk(b"YPTI", p_track_info_entries)
+        return PTrackInfoChunk(b"YPTI", p_track_info_entries_1)
 
     else:
-        p_track_info_entries: list[ExtendedPTrackInfoEntry] = []
+        p_track_info_entries_2: list[ExtendedPTrackInfoEntry] = []
         for p_track_chunk in p_track_chunks:
             ports = (
                 0x0001
@@ -95,7 +95,7 @@ def p_track_info_chunk_by_p_track_chunks(
             )
             sysex_ports = 4 if p_track_chunk.track_number() >= 2 else 1
 
-            track_info_channel_info_entries: list[
+            track_info_channel_info_entries_2: list[
                 ExtendedPTrackInfoChannelInfoEntry
             ] = []
             for channel in range(16):
@@ -103,7 +103,7 @@ def p_track_info_chunk_by_p_track_chunks(
                 channel_attribute = (
                     127 if p_track_chunk.track_number() == 1 and channel == 9 else 255
                 )
-                track_info_channel_info_entries.append(
+                track_info_channel_info_entries_2.append(
                     ExtendedPTrackInfoChannelInfoEntry(
                         channel_attribute if exists_message else 0,
                         ports,
@@ -113,21 +113,21 @@ def p_track_info_chunk_by_p_track_chunks(
                     )
                 )
 
-            p_track_info_entries.append(
+            p_track_info_entries_2.append(
                 ExtendedPTrackInfoEntry(
                     p_track_chunk.track_number(),
                     0x40,
                     0x00,
                     [0] * 16,
                     [0] * 16,
-                    track_info_channel_info_entries,
+                    track_info_channel_info_entries_2,
                     sysex_ports,
                     0x00,
                 )
             )
 
         return ExtendedPTrackInfoChunk(
-            b"YPXI", b"\x00\x00\x00\x00\x00\x00\x00\x00", 0, p_track_info_entries
+            b"YPXI", b"\x00\x00\x00\x00\x00\x00\x00\x00", 0, p_track_info_entries_2
         )
 
 

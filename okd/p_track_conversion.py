@@ -80,8 +80,9 @@ def p_track_to_midi(
             midi.tracks.append(midi_track)
 
     absolute_time_track: list[PTrackAbsoluteTimeEvent | PTrackAbsoluteTimeMetaEvent] = (
-        __p_tracks_to_absolute_time_track(track_info, tracks)
+        []
     )
+    absolute_time_track += __p_tracks_to_absolute_time_track(track_info, tracks)
     if len(absolute_time_track) < 1:
         raise ValueError("Track empty.")
 
@@ -184,16 +185,12 @@ def __midi_to_absolute_time_tracks(
     midi_time_converter = MidiTimeConverter()
     midi_time_converter.load_from_midi(midi)
 
-    absolute_time_tracks: list[list[PTrackAbsoluteTimeEvent]] = [
-        None
-    ] * PTrackChunk.PORTS
+    absolute_time_tracks: list[list[PTrackAbsoluteTimeEvent]] = [[]] * PTrackChunk.PORTS
     for i, midi_track in enumerate(midi.tracks):
         port = get_track_port(midi_track)
         if port is None:
             __logger.warning(f"Port undefined. track={i}")
             continue
-        if absolute_time_tracks[port] is None:
-            absolute_time_tracks[port] = []
 
         track_time = 0
         for midi_message in midi_track:
@@ -232,9 +229,6 @@ def __midi_to_absolute_time_tracks(
                 )
 
     for absolute_time_track in absolute_time_tracks:
-        if absolute_time_track is None:
-            continue
-
         absolute_time_track.sort(
             key=lambda absolute_time_event: absolute_time_event.time
         )

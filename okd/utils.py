@@ -40,6 +40,7 @@ def okd_to_midi(okd: OkdFile, sysex_to_text: bool) -> mido.MidiFile:
     ) = None
     p_tracks: list[PTrackChunk] = []
 
+    m_track_interpritation: MTrackInterpretation | None = None
     for chunk in okd.chunks:
         chunk_id_hex = chunk.id.hex().upper()
         __logger.info(f"{type(chunk).__name__} found. id={chunk.id} (0x{chunk_id_hex})")

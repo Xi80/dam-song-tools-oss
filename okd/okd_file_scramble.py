@@ -1,6 +1,6 @@
-from io import BufferedReader
 from logging import getLogger
 from random import randint
+from typing import BinaryIO
 
 from .okd_scramble_pattern import OKD_SCRAMBLE_PATTERN
 
@@ -12,16 +12,16 @@ def choose_scramble_pattern_index():
 
 
 def scramble(
-    input_stream: BufferedReader,
-    output_stream: BufferedReader,
+    input_stream: BinaryIO,
+    output_stream: BinaryIO,
     scramble_pattern_index: int,
     length: int | None = None,
 ):
     """Scramble
 
     Args:
-        input_stream (BufferedReader): Input stream
-        output_stream (BufferedReader): Output stream
+        input_stream (BinaryIO): Input stream
+        output_stream (BinaryIO): Output stream
         scramble_pattern_index (int): Scramble pattern index
         length (int | None, optional): Length. Defaults to None.
 
@@ -53,13 +53,13 @@ def scramble(
 
 
 def detect_scramble_pattern_index(
-    stream: BufferedReader,
+    stream: BinaryIO,
     expected_magic_bytes: bytes,
 ) -> int | None:
     """Detect scramble pattern index
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
         expected_magic_bytes (bytes): Expected magic bytes (4 bytes)
 
     Raises:
@@ -101,16 +101,16 @@ def detect_scramble_pattern_index(
 
 
 def descramble(
-    input_stream: BufferedReader,
-    output_stream: BufferedReader,
+    input_stream: BinaryIO,
+    output_stream: BinaryIO,
     scramble_pattern_index: int,
     length: int | None = None,
 ) -> int:
     """Descramble
 
     Args:
-        input_stream (BufferedReader): Input stream
-        output_stream (BufferedReader): Output stream
+        input_stream (BinaryIO): Input stream
+        output_stream (BinaryIO): Output stream
         scramble_pattern_index (int): Scramble pattern index
         length (int | None, optional): Length. Defaults to None.
 

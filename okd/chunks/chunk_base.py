@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from io import BufferedReader, BufferedWriter
 import os
+from typing import BinaryIO
 
 
 @dataclass
@@ -13,7 +13,7 @@ class ChunkBase(ABC):
     id: bytes
 
     @staticmethod
-    def __descramble_header(id: bytes, size: int) -> tuple[int, bytes]:
+    def __descramble_header(id: bytes, size: int) -> tuple[bytes, int]:
         """Descramble Chunk Header
 
         Args:
@@ -30,11 +30,11 @@ class ChunkBase(ABC):
         return id, size
 
     @staticmethod
-    def _read_common(stream: BufferedReader) -> tuple[int, bytes]:
+    def _read_common(stream: BinaryIO) -> tuple[bytes, bytes]:
         """Read Common Part
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             tuple[int, bytes]: Chunk ID and Payload
@@ -53,11 +53,11 @@ class ChunkBase(ABC):
         return id, payload
 
     @staticmethod
-    def peek_header(stream: BufferedReader) -> tuple[bytes, int]:
+    def peek_header(stream: BinaryIO) -> tuple[bytes, int] | None:
         """Peek Header
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             bytes: ID and Size
@@ -76,12 +76,12 @@ class ChunkBase(ABC):
 
     @staticmethod
     def __seek_header(
-        stream: BufferedReader, id: bytes | None = None
-    ) -> tuple[int, int] | None:
+        stream: BinaryIO, id: bytes | None = None
+    ) -> tuple[bytes, int] | None:
         """Seek header
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
             id (bytes | None, optional): Target ID. Defaults to None.
 
         Returns:
@@ -100,17 +100,18 @@ class ChunkBase(ABC):
             stream.seek(8 + current_size, os.SEEK_CUR)
 
     @staticmethod
-    def index_chunk(stream: BufferedReader) -> list[tuple[int, int, bytes]]:
+    def index_chunk(stream: BinaryIO) -> list[tuple[int, int, bytes]]:
         """Index Chunk
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             list[tuple[int, int, bytes]]: List of offset, size and ID
         """
         index: list[tuple[int, int, bytes]] = []
 
+        id = b""
         last_position = -1
         while True:
             header = ChunkBase.__seek_header(stream)
@@ -138,11 +139,11 @@ class ChunkBase(ABC):
         """
         pass
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         payload_buffer = self._payload_buffer()
         stream.write(self.id)

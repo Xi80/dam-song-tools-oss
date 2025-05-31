@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from io import BufferedWriter, BytesIO
-from typing import Self
+from io import BytesIO
+from typing import BinaryIO, Self
 
 from ..adpcm import AdpcmDecoder
 
@@ -26,7 +26,7 @@ class AdpcmChunkTrack:
         decoder = AdpcmDecoder()
         return decoder.decode(stream)
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from io import BufferedReader, BufferedWriter, BytesIO
+from io import BytesIO
 import os
-from typing import Self
+from typing import BinaryIO, Self
 
 from midi.event import MidiEvent, MidiTrackEvent
 from ..okd_midi import (
@@ -22,11 +22,11 @@ class MTrackEvent(MidiTrackEvent):
     __END_OF_TRACK_MARK = b"\x00\x00\x00\x00"
 
     @staticmethod
-    def read_sysex_data_bytes(stream: BufferedReader) -> bytes:
+    def read_sysex_data_bytes(stream: BinaryIO) -> bytes:
         """Read Data Bytes of SysEx Message
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Raises:
             ValueError: Unterminated SysEx message detected
@@ -50,11 +50,11 @@ class MTrackEvent(MidiTrackEvent):
         return data_bytes
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self | None:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Raises:
             ValueError: Unknown Status Byte detected
@@ -110,11 +110,11 @@ class MTrackEvent(MidiTrackEvent):
 
         return cls(status_byte, data_bytes, delta_time)
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         write_extended_variable_int(stream, self.delta_time)
         stream.write(self.status_byte.to_bytes())
