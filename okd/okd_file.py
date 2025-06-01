@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from io import BufferedReader, BufferedWriter, BytesIO
+from io import BytesIO
 from logging import getLogger
-from typing import Self, Union
+from typing import Self, Union, BinaryIO
 
-from sprc_header.sprc_header import SprcHeader
+from sprc.header import SprcHeader
 from .chunks import OkdChunk, ChunkBase, read_chunk
 from .okd_file_scramble import (
     choose_scramble_pattern_index,
@@ -29,13 +29,13 @@ class OkdHeaderBase(ABC):
 
     @staticmethod
     def _read_common(
-        stream: BufferedReader,
+        stream: BinaryIO,
         scramble_pattern_index: int | None = None,
     ) -> tuple[int, str, int, int, int, bytes]:
         """Read Common Part
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
             scramble_pattern_index (int): Scramble pattern index
 
         Raises:
@@ -96,7 +96,8 @@ class OkdHeaderBase(ABC):
         )
 
     @abstractmethod
-    def optional_data_buffer_size(self) -> bytes:
+    @staticmethod
+    def optional_data_buffer_size() -> int:
         """Size of Optional Data Buffer
 
         Returns:
@@ -105,7 +106,7 @@ class OkdHeaderBase(ABC):
         pass
 
     @abstractmethod
-    def _optional_data_buffer() -> bytes:
+    def _optional_data_buffer(self) -> bytes:
         """Optional Data Buffer
 
         Returns:
@@ -113,11 +114,11 @@ class OkdHeaderBase(ABC):
         """
         pass
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         stream.write(OkdHeaderBase.MAGIC_BYTES)
         stream.write(self.length.to_bytes(4, "big"))
@@ -139,13 +140,13 @@ class OkdGenericHeader(OkdHeaderBase):
     @classmethod
     def read(
         cls,
-        stream: BufferedReader,
+        stream: BinaryIO,
         scramble_pattern_index: int | None = None,
     ) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
             scramble_pattern_index (int): Scramble pattern index
 
         Returns:
@@ -164,7 +165,7 @@ class OkdGenericHeader(OkdHeaderBase):
         )
 
     @staticmethod
-    def optional_data_buffer_size() -> bytes:
+    def optional_data_buffer_size() -> int:
         raise NotImplementedError()
 
     def _optional_data_buffer(self) -> bytes:
@@ -194,7 +195,7 @@ class YksOkdHeader(OkdHeaderBase):
         )
 
     @staticmethod
-    def optional_data_buffer_size() -> bytes:
+    def optional_data_buffer_size() -> int:
         return 0
 
     def _optional_data_buffer(self) -> bytes:
@@ -237,7 +238,7 @@ class MmtOkdHeader(OkdHeaderBase):
         )
 
     @staticmethod
-    def optional_data_buffer_size() -> bytes:
+    def optional_data_buffer_size() -> int:
         return 12
 
     def _optional_data_buffer(self) -> bytes:
@@ -290,7 +291,7 @@ class MmkOkdHeader(OkdHeaderBase):
         )
 
     @staticmethod
-    def optional_data_buffer_size() -> bytes:
+    def optional_data_buffer_size() -> int:
         return 20
 
     def _optional_data_buffer(self) -> bytes:
@@ -354,7 +355,7 @@ class SprOkdHeader(OkdHeaderBase):
         )
 
     @staticmethod
-    def optional_data_buffer_size() -> bytes:
+    def optional_data_buffer_size() -> int:
         return 24
 
     def _optional_data_buffer(self) -> bytes:
@@ -423,7 +424,7 @@ class DioOkdHeader(OkdHeaderBase):
         )
 
     @staticmethod
-    def optional_data_buffer_size() -> bytes:
+    def optional_data_buffer_size() -> int:
         return 32
 
     def _optional_data_buffer(self) -> bytes:
@@ -442,16 +443,16 @@ class DioOkdHeader(OkdHeaderBase):
         return buffer
 
 
-OkdHeader = Union[YksOkdHeader, MmtOkdHeader, MmkOkdHeader, SprOkdHeader, DioOkdHeader]
+OkdHeader = Union[OkdGenericHeader, YksOkdHeader, MmtOkdHeader, MmkOkdHeader, SprOkdHeader, DioOkdHeader]
 
 
 def read_okd_header(
-    stream: BufferedReader, scramble_pattern_index: int | None = None
+    stream: BinaryIO, scramble_pattern_index: int | None = None
 ) -> OkdHeader:
     """Read OKD Header
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
         scramble_pattern_index (int | None, optional): Scramble pattern index. Defaults to None.
 
     Returns:
@@ -483,11 +484,11 @@ class OkdFile:
     chunks: list[OkdChunk]
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Raises:
             ValueError: Invalid `magic_bytes`
@@ -538,11 +539,11 @@ class OkdFile:
 
         return cls(header, chunks)
 
-    def write(self, stream: BufferedWriter, should_scramble: bool = False) -> None:
+    def write(self, stream: BinaryIO, should_scramble: bool = False) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
             scramble (bool, optional): Scramble. Defaults to False.
         """
         # Make chunks buffer

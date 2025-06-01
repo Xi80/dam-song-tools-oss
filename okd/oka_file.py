@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from io import BufferedReader, BufferedWriter, BytesIO
-from typing import Self
+from io import BytesIO
+from typing import BinaryIO, Self
 
 from .okd_file_scramble import descramble
 
@@ -23,13 +23,13 @@ class OkaHeader:
     @classmethod
     def read(
         cls,
-        stream: BufferedReader,
+        stream: BinaryIO,
         scramble_pattern_index: int | None = None,
     ) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
             scramble_pattern_index (int): Scramble pattern index
 
         Raises:
@@ -66,11 +66,11 @@ class OkaHeader:
             magic_bytes, length, version, id_karaoke, data_offset, unknown_0, crc
         )
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         stream.write(OkaHeader.MAGIC_BYTES)
         stream.write(self.length.to_bytes(4, "big"))

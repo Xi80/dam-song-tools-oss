@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from io import BufferedWriter, BytesIO
+from io import BytesIO
 from typing import Self
 
 from .chunk_base import ChunkBase
@@ -64,7 +64,7 @@ class P3TrackInfoChunk(ChunkBase):
             offset = 2 * channel
             channel_groups.append(int.from_bytes(buffer[offset : offset + 2], "big"))
 
-        channel_info: list[int] = []
+        channel_info: list[PTrackInfoChannelInfoEntry] = []
         for channel in range(16):
             channel_info.append(PTrackInfoChannelInfoEntry.read(stream))
 
@@ -111,33 +111,3 @@ class P3TrackInfoChunk(ChunkBase):
 
         stream.seek(0)
         return stream.read()
-
-    @classmethod
-    def from_json_object(
-        cls, json_object: object
-    ) -> P3TrackInfoChannelInfoEntry | Self:
-        """From JSON Object
-
-        Args:
-            json_object (object): JSON Object
-
-        Returns:
-            P3TrackInfoChannelInfoEntry | Self: Converted instance
-        """
-        if "attribute" in json_object:
-            return P3TrackInfoChannelInfoEntry(
-                json_object["attribute"],
-                json_object["ports"],
-                json_object["control_change_ax"],
-                json_object["control_change_cx"],
-            )
-        elif "track_number" in json_object:
-            return cls(
-                json_object["track_number"],
-                json_object["track_status"],
-                json_object["use_channel_group_flag"],
-                json_object["default_channel_groups"],
-                json_object["channel_groups"],
-                json_object["channel_info"],
-                json_object["system_ex_ports"],
-            )

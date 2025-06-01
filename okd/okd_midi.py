@@ -1,12 +1,12 @@
-from io import BufferedReader
 import os
+from typing import BinaryIO
 
 
-def read_status_byte(stream: BufferedReader) -> int:
+def read_status_byte(stream: BinaryIO) -> int:
     """Read Status Byte
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
 
     Raises:
         ValueError: Invalid Status Byte
@@ -24,11 +24,11 @@ def read_status_byte(stream: BufferedReader) -> int:
     return byte
 
 
-def peek_status_byte(stream: BufferedReader) -> int:
+def peek_status_byte(stream: BinaryIO) -> int:
     """Peek Status Byte
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
 
     Raises:
         ValueError: Invalid Status Byte
@@ -47,11 +47,11 @@ def peek_status_byte(stream: BufferedReader) -> int:
     return byte
 
 
-def read_data_byte(stream: BufferedReader) -> int:
+def read_data_byte(stream: BinaryIO) -> int:
     """Read Data Byte
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
 
     Raises:
         ValueError: Invalid Data Byte
@@ -69,11 +69,11 @@ def read_data_byte(stream: BufferedReader) -> int:
     return byte
 
 
-def peek_data_byte(stream: BufferedReader) -> int:
+def peek_data_byte(stream: BinaryIO) -> int:
     """Peek Data Byte
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
 
     Raises:
         ValueError: Invalid data byte
@@ -107,11 +107,11 @@ def is_data_bytes(data: bytes) -> bool:
     return True
 
 
-def read_variable_int(stream: BufferedReader) -> int:
+def read_variable_int(stream: BinaryIO) -> int:
     """Read Variable Int
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
 
     Raises:
         ValueError: Invalid byte sequence
@@ -130,11 +130,11 @@ def read_variable_int(stream: BufferedReader) -> int:
     raise ValueError(f"Invalid byte sequence. position={position}")
 
 
-def write_variable_int(stream: BufferedReader, value: int) -> None:
+def write_variable_int(stream: BinaryIO, value: int) -> None:
     """Write Variable Int
 
     Args:
-        stream (BufferedReader): Output stream
+        stream (BinaryIO): Output stream
         value (int): Value
 
     Raises:
@@ -159,11 +159,11 @@ def write_variable_int(stream: BufferedReader, value: int) -> None:
             break
 
 
-def read_extended_variable_int(stream: BufferedReader) -> int:
+def read_extended_variable_int(stream: BinaryIO) -> int:
     """Read Extended Variable Int
 
     Args:
-        stream (BufferedReader): Input stream
+        stream (BinaryIO): Input stream
 
     Returns:
         int: Extended Variable Int value
@@ -181,11 +181,11 @@ def read_extended_variable_int(stream: BufferedReader) -> int:
     return value
 
 
-def write_extended_variable_int(stream: BufferedReader, value: int) -> None:
+def write_extended_variable_int(stream: BinaryIO, value: int) -> None:
     """Write Extended Variable Int
 
     Args:
-        stream (BufferedReader): Output stream
+        stream (BinaryIO): Output stream
         value (int): Value
     """
     while 0x000000 < value:

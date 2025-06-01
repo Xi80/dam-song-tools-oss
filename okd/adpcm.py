@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from io import BufferedReader
 import os
-from typing import Self
+from typing import BinaryIO, Self
 
 FRAMES_PER_FRAME_GROUP = 18
 
@@ -25,11 +24,11 @@ class AdpcmFrame:
     samples: bytes
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             Self: Instance of this class
@@ -100,12 +99,12 @@ class AdpcmDecoder:
         return sample
 
     def __decode_subframe(
-        self, sp: bytes, samples: bytes, subframe_index: int, nibble: int
+        self, sp: int, samples: bytes, subframe_index: int, nibble: int
     ) -> list[int]:
         """Decode Subframe
 
         Args:
-            sp (bytes): Parameter
+            sp (int): Parameter
             samples (bytes): Samples
             subframe_index (int): Subframe index
             nibble (int): Nibble (0: High, 1: Low)
@@ -130,7 +129,7 @@ class AdpcmDecoder:
         Returns:
             list[int]: Decoded Frame
         """
-        decoded: list[float] = []
+        decoded: list[int] = []
         for i in range(SUB_FRAMES):
             for j in range(2):
                 sp_index = j + i * 2
@@ -140,11 +139,11 @@ class AdpcmDecoder:
                 decoded += self.__decode_subframe(sp, frame.samples, i, j)
         return decoded
 
-    def __decode_frame_group(self, stream: BufferedReader) -> list[int]:
+    def __decode_frame_group(self, stream: BinaryIO) -> list[int]:
         """Decode Frame Group
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             list[int]: Decoded Frame Group
@@ -155,11 +154,11 @@ class AdpcmDecoder:
             decoded += self.__decode_frame(frame)
         return decoded
 
-    def decode(self, stream: BufferedReader) -> list[int]:
+    def decode(self, stream: BinaryIO) -> list[int]:
         """Decode
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Returns:
             list[int]: Decoded samples

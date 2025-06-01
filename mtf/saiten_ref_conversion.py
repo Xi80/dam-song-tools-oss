@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-import json
 
 import mido
 
@@ -83,27 +82,27 @@ def midi_to_saiten_ref(midi: mido.MidiFile) -> list[SaitenRefEvent]:
         if not isinstance(midi_message, mido.Message):
             continue
 
-        if midi_message.type == "note_on":
+        if midi_message.type == "note_on":  # type: ignore
             absolute_time_track.append(
                 SaitenRefEvent(
-                    absolute_time, SaitenRefEventType.NOTE_ON, midi_message.note, 100
+                    absolute_time, SaitenRefEventType.NOTE_ON, midi_message.note, 100  # type: ignore
                 )
             )
-        elif midi_message.type == "note_off":
+        elif midi_message.type == "note_off":  # type: ignore
             absolute_time_track.append(
                 SaitenRefEvent(
-                    absolute_time, SaitenRefEventType.NOTE_OFF, midi_message.note, 100
+                    absolute_time, SaitenRefEventType.NOTE_OFF, midi_message.note, 100  # type: ignore
                 )
             )
 
-        if midi_message.type == "note_on":
+        if midi_message.type == "note_on":  # type: ignore
             current_melody_note_start = absolute_time
-            current_melody_node_number = midi_message.note
+            current_melody_node_number = midi_message.note  # type: ignore
         elif (
-            midi_message.type == "note_off"
-            and midi_message.note == current_melody_node_number
+            midi_message.type == "note_off"  # type: ignore
+            and midi_message.note == current_melody_node_number  # type: ignore
         ):
-            melody_notes.append((current_melody_note_start, absolute_time))
+            melody_notes.append((current_melody_note_start, absolute_time))  # type: ignore
 
     if len(melody_notes) < 1:
         raise ValueError("Melody note not found.")
@@ -124,13 +123,13 @@ def midi_to_saiten_ref(midi: mido.MidiFile) -> list[SaitenRefEvent]:
             if not isinstance(midi_message, mido.Message):
                 continue
 
-            if midi_message.type == "note_on":
-                if midi_message.note == 48:
+            if midi_message.type == "note_on":  # type: ignore
+                if midi_message.note == 48:  # type: ignore
                     current_hook_start = absolute_time
-                elif midi_message.note == 72:
+                elif midi_message.note == 72:  # type: ignore
                     two_chorus_fadeout_time = absolute_time
-            elif midi_message.type == "note_off":
-                if midi_message.note == 48:
+            elif midi_message.type == "note_off":  # type: ignore
+                if midi_message.note == 48:  # type: ignore
                     hooks.append((current_hook_start, absolute_time))
 
     first_note_on_tick, last_note_off_tick = get_first_and_last_note_times(midi.tracks)

@@ -31,12 +31,12 @@ def __midi_to_absolute_time_track(midi: mido.MidiFile) -> list[MTrackAbsoluteTim
         if not isinstance(midi_message, mido.Message):
             continue
 
-        if midi_message.type == "note_on":
+        if midi_message.type == "note_on":  # type: ignore
             current_melody_note_start = absolute_time
-            current_melody_node_number = midi_message.note
+            current_melody_node_number = midi_message.note  # type: ignore
         elif (
-            midi_message.type == "note_off"
-            and midi_message.note == current_melody_node_number
+            midi_message.type == "note_off"  # type: ignore
+            and midi_message.note == current_melody_node_number  # type: ignore
         ):
             melody_notes.append((current_melody_note_start, absolute_time))
 
@@ -59,13 +59,13 @@ def __midi_to_absolute_time_track(midi: mido.MidiFile) -> list[MTrackAbsoluteTim
             if not isinstance(midi_message, mido.Message):
                 continue
 
-            if midi_message.type == "note_on":
-                if midi_message.note == 48:
+            if midi_message.type == "note_on":  # type: ignore
+                if midi_message.note == 48:  # type: ignore
                     current_hook_start = absolute_time
-                elif midi_message.note == 72:
+                elif midi_message.note == 72:  # type: ignore
                     two_chorus_fadeout_time = absolute_time
-            elif midi_message.type == "note_off":
-                if midi_message.note == 48:
+            elif midi_message.type == "note_off":  # type: ignore
+                if midi_message.note == 48:  # type: ignore
                     hooks.append((current_hook_start, absolute_time))
 
     first_note_on_tick, last_note_off_tick = get_first_and_last_note_times(midi.tracks)
@@ -76,6 +76,7 @@ def __midi_to_absolute_time_track(midi: mido.MidiFile) -> list[MTrackAbsoluteTim
 
     time_signatures = get_time_signatures(midi.tracks)
 
+    visible_guide_melody_delimiters: list[tuple[int, int]] = []
     for tick, numerator, denominator in time_signatures:
         absolute_time_track.append(
             MTrackAbsoluteTimeEvent(
@@ -86,7 +87,6 @@ def __midi_to_absolute_time_track(midi: mido.MidiFile) -> list[MTrackAbsoluteTim
         )
 
         melody_notes_copy = melody_notes.copy()
-        visible_guide_melody_delimiters: list[tuple[int, int]] = []
         current_page_start = -1
         while True:
             melody_note: tuple[int, int]
@@ -214,7 +214,7 @@ def __midi_to_absolute_time_track(midi: mido.MidiFile) -> list[MTrackAbsoluteTim
 
 
 def midi_to_m_track(
-    midi: list[mido.MidiFile],
+    midi: mido.MidiFile,
 ) -> MTrackChunk:
     absolute_time_track = __midi_to_absolute_time_track(midi)
     events: list[MTrackEvent] = []

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from io import BufferedReader
-from typing import Self
+from typing import BinaryIO, Self
 
 from .chunk_base import ChunkBase
 
@@ -12,11 +11,11 @@ class GenericChunk(ChunkBase):
     payload: bytes
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self:
         """Read
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIOBufferedReader): Input stream
 
         Returns:
             Self: Generic Chunk

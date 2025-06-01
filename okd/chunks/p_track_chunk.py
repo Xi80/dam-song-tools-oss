@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from io import BufferedReader, BufferedWriter, BytesIO
+from io import BytesIO
 import os
-from typing import Self
+from typing import BinaryIO, Self
 
 from midi.event import MidiEvent, MidiTrackEvent
 from ..okd_midi import (
@@ -32,11 +32,11 @@ class PTrackEvent(MidiTrackEvent):
     duration: int | None = None
 
     @staticmethod
-    def read_sysex_data_bytes(stream: BufferedReader) -> bytes:
+    def read_sysex_data_bytes(stream: BinaryIO) -> bytes:
         """Read Data Bytes of SysEx Message
 
         Args:
-            stream (BufferedReader): Input stream
+            stream (BinaryIO): Input stream
 
         Raises:
             ValueError: Unterminated SysEx message detected
@@ -60,7 +60,7 @@ class PTrackEvent(MidiTrackEvent):
         return data_bytes
 
     @classmethod
-    def read(cls, stream: BufferedReader) -> Self:
+    def read(cls, stream: BinaryIO) -> Self | None:
         delta_time = read_extended_variable_int(stream)
 
         end_of_track = stream.read(4)
@@ -145,11 +145,11 @@ class PTrackEvent(MidiTrackEvent):
 
         return cls(status_byte, data_bytes, delta_time, duration)
 
-    def write(self, stream: BufferedWriter) -> None:
+    def write(self, stream: BinaryIO) -> None:
         """Write
 
         Args:
-            stream (BufferedReader): Output stream
+            stream (BinaryIO): Output stream
         """
         write_extended_variable_int(stream, self.delta_time)
         stream.write(self.status_byte.to_bytes())
@@ -201,7 +201,7 @@ class PTrackChunk(ChunkBase):
 
     @staticmethod
     def __relocate_event(
-        track_info_entry: PTrackInfoEntry | ExtendedPTrackInfoEntry,
+        track_info_entry: PTrackInfoEntry | ExtendedPTrackInfoEntry | P3TrackInfoChunk,
         status_byte: int,
         data_bytes: bytes,
         time: int,
@@ -348,11 +348,14 @@ class PTrackChunk(ChunkBase):
 
             status_type = event.status_byte_type()
             if status_type == 0x80:
+                duration = event.duration
+                if duration is None:
+                    continue
+
                 channel = event.channel()
                 note_number = event.data_bytes[0]
                 note_on_velocity = event.data_bytes[1]
                 note_off_velocity = event.data_bytes[2]
-                duration = event.duration
                 if not is_lossless_track:
                     duration <<= 2
                 # Note on
@@ -372,10 +375,13 @@ class PTrackChunk(ChunkBase):
                     channel_grouping_enabled,
                 )
             elif status_type == 0x90:
+                duration = event.duration
+                if duration is None:
+                    continue
+
                 channel = event.channel()
                 note_number = event.data_bytes[0]
                 note_on_velocity = event.data_bytes[1]
-                duration = event.duration
                 if not is_lossless_track:
                     duration <<= 2
                 # Note on
