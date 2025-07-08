@@ -27,7 +27,7 @@ COPY pyproject.toml poetry.lock README.md settings.ini /app/
 COPY midi/ midi/
 COPY okd/ okd/
 COPY mtf/ mtf/
-COPY sprc_header/ sprc_header/
+COPY sprc/ sprc/
 COPY dam_song_tools_cli/ dam_song_tools_cli/
 
 RUN poetry install
