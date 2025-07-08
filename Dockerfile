@@ -10,8 +10,6 @@ RUN --mount=type=cache,target=/var/lib/apt/,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
     curl ffmpeg
 
-RUN apt-get update
-
 RUN groupadd -g $GID python \
     && useradd -m -s /bin/bash -u $UID -g $GID python
 
