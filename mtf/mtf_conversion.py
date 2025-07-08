@@ -163,7 +163,7 @@ def dump_refs(mtf_root_path: str, export_each_file: bool = False) -> str:
 
     # Dump Ref JSON files
     for ref_file in MtfFileContent.REF_FILES:
-        ref_midi = dump_ref(mtf_root_path, ref_file)
+        ref_midi = dump_ref(mtf_root_path, ref_file, export_each_file)
         if ref_midi is None:
             continue
         for track in ref_midi.tracks:
