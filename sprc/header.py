@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Final, BinaryIO, Self
-
+import io
 from fastcrc import crc16
 
 # Magic bytes that identify SPRC files
@@ -101,7 +101,7 @@ class SprcHeader:
         Returns:
             True if the calculated CRC matches the stored CRC, False otherwise
         """
-        if isinstance(data, BinaryIO):
+        if isinstance(data, io.IOBase):
             # Save current position
             position = data.tell()
 
