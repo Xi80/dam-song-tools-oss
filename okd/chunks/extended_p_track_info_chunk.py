@@ -172,7 +172,7 @@ class ExtendedPTrackInfoChunk(ChunkBase):
             Self: ExtendedPTrackInfoChunk
         """
         unknown_0 = generic.payload[0:8]
-        tg_mode = int.from_bytes(generic.payload[8:10:3], "big")
+        tg_mode = int.from_bytes(generic.payload[8:10], "big")
         entry_count = int.from_bytes(generic.payload[10:12], "big")
         data: list[ExtendedPTrackInfoEntry] = []
         stream = BytesIO(generic.payload[12:])

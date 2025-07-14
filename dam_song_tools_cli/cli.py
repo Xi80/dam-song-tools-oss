@@ -211,13 +211,15 @@ class Cli:
         with open(okd_path, "wb") as output_file:
             okd.write(output_file, scramble)
 
-    def okd_to_midi(self, okd_path, midi_path, sysex_to_text=True) -> None:
+    def okd_to_midi(self, okd_path, midi_path, sysex_to_text=False, add_reset_exclusive=True, key=0) -> None:
         """Convert a OKD to a Standard MIDI File
 
         Args:
             okd_path (str): Input OKD path
             midi_path (str): Output MIDI path
             sysex_to_text (bool): Convert SysEx Messages to Text Meta Messages
+            add_reset_exclusive (bool): Add reset exclusive
+            transpose(int): Set transpose
 
         Raises:
             ValueError: Argument `okd_path` must be str.
@@ -230,10 +232,16 @@ class Cli:
             raise ValueError("Argument `midi_path` must be str.")
         if not isinstance(sysex_to_text, bool):
             raise ValueError("Argument `sysex_to_text` must be bool.")
+        if not isinstance(add_reset_exclusive, bool):
+            raise ValueError("Argument `add_reset_exclusive` must be bool.")
+        if not isinstance(key, int):
+            raise ValueError("Argument `key` must be int.")
+
+
 
         with open(okd_path, "rb") as okd_file:
             okd = OkdFile.read(okd_file)
-            midi = okd_to_midi(okd, sysex_to_text)
+            midi = okd_to_midi(okd, sysex_to_text, add_reset_exclusive, key)
             midi.save(midi_path)
 
     def midi_to_okd(

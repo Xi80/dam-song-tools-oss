@@ -20,12 +20,14 @@ from okd.p_track_conversion import p_track_to_midi, midi_to_p_tracks, midi_to_p3
 __logger = getLogger(__name__)
 
 
-def okd_to_midi(okd: OkdFile, sysex_to_text: bool) -> mido.MidiFile:
+def okd_to_midi(okd: OkdFile, sysex_to_text: bool, add_reset_exclusive: bool,key: int) -> mido.MidiFile:
     """Make MIDI file from OKD
 
     Args:
         okd (OkdFile): OKD file
         sysex_to_text (bool): Convert SysEx Messages to Text Meta Messages
+        add_reset_exclusive (bool): Add Reset Exclusive to MIDI
+        key (int): Transpose value
 
     Raises:
         ValueError: Invalid input OKD.
@@ -62,7 +64,7 @@ def okd_to_midi(okd: OkdFile, sysex_to_text: bool) -> mido.MidiFile:
 
     __logger.info("Make P-Track MIDI file.")
     return p_track_to_midi(
-        m_track_interpritation, p_track_info, p_tracks, sysex_to_text
+        m_track_interpritation, p_track_info, p_tracks, sysex_to_text, add_reset_exclusive, key
     )
 
 

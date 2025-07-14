@@ -45,6 +45,8 @@ def p_track_to_midi(
     track_info: PTrackInfoChunk | ExtendedPTrackInfoChunk | P3TrackInfoChunk,
     tracks: list[PTrackChunk],
     sysex_to_text: bool,
+    add_reset_exclusive: bool,
+    key: int
 ) -> mido.MidiFile:
     midi_time_converter = MidiTimeConverter()
     for time, tempo in m_track_interpretation.tempos:
@@ -65,6 +67,22 @@ def p_track_to_midi(
                     port=port,
                 )
             )
+            # Add Reset exclusive
+            is_mode_2 = isinstance(track_info, ExtendedPTrackInfoChunk) and (track_info.tg_mode == 0)
+            __logger.info(f'TG Mode 2? : {is_mode_2}')
+            if channel == 0:
+                if add_reset_exclusive:
+                    if is_mode_2:
+                        midi_track.append(mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x7F, 0x01, 0x00], time=960))
+                    else:
+                        midi_track.append(mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x7F, 0x00, 0x00], time=960))
+                if key != 0:
+                    if is_mode_2:
+                        midi_track.append(
+                            mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x05, 64+key, 0x00]))
+                    else:
+                        midi_track.append(
+                            mido.Message('sysex', data=[0x43, 0x10, 0x31, 0x00, 0x00, 0x05, 64+key, 0x00]))
             # Track setup messages
             midi_device = midi_device_1 if port < 2 else midi_device_2
             muti_part_entry_index = port // 2 * MmtTg.PARTS_PER_PORT + channel
@@ -73,7 +91,7 @@ def p_track_to_midi(
             track_setup_messages = MultiPartEntry.to_mido_messages(
                 multi_part_entry,
                 part_number % PTrackChunk.CHANNELS_PER_PORT,
-                0,
+                1920,
             )
             midi_track += track_setup_messages
 
