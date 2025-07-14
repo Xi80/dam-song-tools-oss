@@ -82,6 +82,9 @@ def p_track_to_midi(
                     else:
                         midi_track.append(
                             mido.Message('sysex', data=[0x43, 0x10, 0x31, 0x00, 0x00, 0x05, 64+key, 0x00]))
+            # Insert dummy message for rest
+            midi_track.append(
+                mido.MetaMessage("sequencer_specific",data=[],time=1920))
             # Track setup messages
             midi_device = midi_device_1 if port < 2 else midi_device_2
             muti_part_entry_index = port // 2 * MmtTg.PARTS_PER_PORT + channel
@@ -90,7 +93,7 @@ def p_track_to_midi(
             track_setup_messages = MultiPartEntry.to_mido_messages(
                 multi_part_entry,
                 part_number % PTrackChunk.CHANNELS_PER_PORT,
-                1920,
+                0,
             )
             midi_track += track_setup_messages
 
