@@ -69,7 +69,6 @@ def p_track_to_midi(
             )
             # Add Reset exclusive
             is_mode_2 = isinstance(track_info, ExtendedPTrackInfoChunk) and (track_info.tg_mode == 0)
-            __logger.info(f'TG Mode 2? : {is_mode_2}')
             if channel == 0:
                 if add_reset_exclusive:
                     if is_mode_2:
