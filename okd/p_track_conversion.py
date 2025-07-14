@@ -73,9 +73,9 @@ def p_track_to_midi(
             if channel == 0:
                 if add_reset_exclusive:
                     if is_mode_2:
-                        midi_track.append(mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x7F, 0x01, 0x00], time=960))
+                        midi_track.append(mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x7F, 0x01, 0x00]))
                     else:
-                        midi_track.append(mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x7F, 0x00, 0x00], time=960))
+                        midi_track.append(mido.Message('sysex', data=[0x43, 0x10, 0x51, 0x00, 0x00, 0x7F, 0x00, 0x00]))
                 if key != 0:
                     if is_mode_2:
                         midi_track.append(
