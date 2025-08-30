@@ -2,9 +2,16 @@ from logging import getLogger
 from random import randint
 from typing import BinaryIO
 
-from .okd_scramble_pattern import OKD_SCRAMBLE_PATTERN
+# OKD Scramble Pattern
+# uint16_t[256]
+_scramble_pattern = [0x0000] * 256
 
 __logger = getLogger(__name__)
+
+
+def set_scramble_pattern(pattern: list[int]) -> None:
+    global _scramble_pattern
+    _scramble_pattern = pattern.copy()
 
 
 def choose_scramble_pattern_index():
@@ -44,7 +51,7 @@ def scramble(
         if len(plaintext_buffer) % 2 != 0:
             raise ValueError("`plaintext_buffer` length must be 2.")
         plaintext = int.from_bytes(plaintext_buffer, "big")
-        scramble_pattern = OKD_SCRAMBLE_PATTERN[scramble_pattern_index % 0x100]
+        scramble_pattern = _scramble_pattern[scramble_pattern_index % 0x100]
         scrambled = plaintext ^ scramble_pattern
         scrambled_buffer = scrambled.to_bytes(2, "big")
         output_stream.write(scrambled_buffer)
@@ -88,10 +95,10 @@ def detect_scramble_pattern_index(
     expected_pattern = magic_bytes_int ^ expected_magic_bytes_int
     for scramble_pattern_index in range(0x100):
         if scramble_pattern_index == 0xFF:
-            candidated_pattern = OKD_SCRAMBLE_PATTERN[0]
+            candidated_pattern = _scramble_pattern[0]
         else:
-            candidated_pattern = OKD_SCRAMBLE_PATTERN[scramble_pattern_index + 1]
-        candidated_pattern |= OKD_SCRAMBLE_PATTERN[scramble_pattern_index] << 16
+            candidated_pattern = _scramble_pattern[scramble_pattern_index + 1]
+        candidated_pattern |= _scramble_pattern[scramble_pattern_index] << 16
         if candidated_pattern == expected_pattern:
             __logger.info(
                 f"OKD file `scramble_pattern_index` detected. scramble_pattern_index={scramble_pattern_index}"
@@ -133,7 +140,7 @@ def descramble(
         if len(scrambled_buffer) % 2 != 0:
             raise ValueError("`plaintext_buffer` length must be 2.")
         scrambled = int.from_bytes(scrambled_buffer, "big")
-        scramble_pattern = OKD_SCRAMBLE_PATTERN[scramble_pattern_index % 0x100]
+        scramble_pattern = _scramble_pattern[scramble_pattern_index % 0x100]
         plaintext = scrambled ^ scramble_pattern
         plaintext_buffer = plaintext.to_bytes(2, "big")
         output_stream.write(plaintext_buffer)
